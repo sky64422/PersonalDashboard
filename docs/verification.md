@@ -30,3 +30,10 @@ AMD Ryzen 5 9600X, 논리 프로세서 12개, NVIDIA RTX 5070. 시스템 보고 
 독립 코드 리뷰에서 검색 결과 상세창 종료 시 포커스 유실과 빌드 확인창 위 검색창 중첩을 발견해 수정했다. 각각 회귀 assertion을 추가했고 UI 테스트 8개가 다시 통과했다.
 
 Gr8r Studio 데모를 실제 브라우저에서 검토한 뒤 Overview 업무 분류 전환을 독립 구현했다. 상태별 개수와 실제 목록, 상세 열기 회귀 검사를 추가해 최종 UI 테스트는 9개다. 기존 CSS 전환만 사용하며 런타임 의존성은 추가하지 않았다.
+
+## Midnight 테마 — 2026-10-23
+
+- 설정의 Daylight / Midnight 선택, 키보드 전환, 새로고침 후 복원, 저장 거부 시 알림을 검증했다. `npm run test:ui`: 11개 통과, `npm test`: 10개 통과.
+- `npm run build`, Rust format 검사 및 `npm run tauri -- build --no-bundle` 성공.
+- `node scripts/native-theme-smoke.mjs`: 실제 production WebView2에서 두 테마 전환, 저장 후 새로고침, 네 화면 및 상세 패널 배경 검사 통과. pageerror 0.
+- 네 화면과 설정, 900×700 화면을 캡처해 직접 확인했다. 테마는 CSS로 적용하며 런타임 의존성·반복 타이머를 추가하지 않았다.

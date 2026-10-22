@@ -54,6 +54,10 @@ npm run tauri -- build --no-bundle
 
 ## 회사에서 이어서 개발하기
 
+워크스페이스 설정 → **화면 테마**에서 Daylight / Midnight를 선택할 수 있습니다. 테마 선택은 이 장치에 저장되며 다음 실행에도 적용됩니다. 저장이 차단된 환경에서는 이번 실행에만 적용하고 알림을 표시합니다.
+
+![Midnight 테마](docs/assets/midnight.png)
+
 - [연동 가이드](docs/company-handoff.md)
 - [검증 기록](docs/verification.md)
 - [승인된 설계](docs/superpowers/specs/2026-10-22-personal-dashboard-design.md)
