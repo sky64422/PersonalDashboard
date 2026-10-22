@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-capability",
+  "description": "Core window access for the local dashboard",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

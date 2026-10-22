@@ -99,4 +99,4 @@ Consumes shared records, feature filters and view navigation. Produces coherent 
 
 ## Execution handoff
 
-Recommended method: native execution in this session. The project is one tightly connected UI foundation, so keeping implementation in one context reduces coordination overhead. Use an independent final review as required by the execution skill. User review of this plan and selection of execution method remain pending.
+Execution approved by the user and performed inline. Tasks 1–4 were implemented and verified together as one initial foundation, rather than committing incomplete intermediate shells. Task 5 passed build, domain/UI tests, native navigation, resize, minimize/restore and idle resource sampling. Independent review found two keyboard issues; both were fixed with regression assertions. Interactive CPU/frame pacing and other DPI scales remain unmeasured. See `docs/verification.md`. Publication follows final native rebuild.

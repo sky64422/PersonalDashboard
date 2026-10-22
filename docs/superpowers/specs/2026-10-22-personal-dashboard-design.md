@@ -1,6 +1,6 @@
 # Personal Dashboard — Windows UI foundation
 
-Status: design approved by the user. Product implementation has not started.
+Status: approved and implemented. See docs/verification.md for measured results and remaining performance validation limits.
 
 ## Outcome and scope
 
