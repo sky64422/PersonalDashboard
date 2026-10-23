@@ -14,9 +14,10 @@ test('overview switches task groups and opens the matching detail', async ({ pag
 test('task filtering, reset, detail focus and persistent search', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
-  await expect(page.getByText('FW-200', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Closed', exact: true }).getByText('FW-200', { exact: true })).toBeVisible();
+  await expect(page.getByText('FW-201', { exact: true })).toHaveCount(0);
   await page.getByLabel('업무 검색', { exact: true }).fill('롤백');
-  const task = page.getByRole('button', { name: /FW-279/ });
+  const task = page.locator('.task-open').filter({ hasText: 'FW-279' });
   await task.click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');

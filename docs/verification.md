@@ -45,3 +45,14 @@ Gr8r Studio 데모를 실제 브라우저에서 검토한 뒤 Overview 업무 �
 - `npm run test:ui`: 13개 통과. `npm test`: 10개 통과. 프런트엔드 빌드, Rust format, Windows production 빌드 성공.
 - 독립 리뷰에서 Critical/Important 문제 없음. `node scripts/native-theme-smoke.mjs`: 실제 앱에서 테마·저장 복원·네 화면·상세 패널과 스위치 Space 전환, 검색 세 그룹 및 End 이동 스크롤 통과. pageerror 0.
 - 다크 네 화면·설정·검색과 밝은 테마, 작은 창 캡처를 검토했다. 추가 런타임 의존성 없음.
+
+## Friday 업무 보드와 숨김 설정 — 2026-10-23
+
+- 표시 이름을 Friday로 변경했다. 앱 식별자와 기존 테마 키는 호환성을 유지한다.
+- Open / Progress / Resolved / Closed 네 열에 내 업무를 배치한다. Overview 및 통합 검색은 Closed를 제외한다.
+- 개별 카드와 상세 패널에서 로컬 숨기기/복원이 가능하다. 숨김은 홈·검색에도 반영되며 재로딩 후 유지된다. Jira 상태는 수정하지 않는다.
+- Lucian #251/#317을 참고한 등장 및 위치 이동 모션을 독립 구현했다. 260ms transform/opacity, 최대 110ms 등장 지연이며 유휴 반복 작업이나 새 의존성은 없다.
+- `npm run test:ui`: 17개 통과. `npm test`: 11개 통과. 숨김 저장/복원, 저장 거부, 열별 배치, 키보드 상세, 좁은 창, 모션 종료와 OS reduced-motion을 포함한다.
+- 실제 화면 검토에서 숨김 토글 hover 대비 문제를 발견해 수정하고 해당 회귀 테스트 2개를 재실행해 통과했다.
+- 밝은/어두운 보드, 900px 창과 숨긴 업무 화면을 캡처해 확인했다. 독립 리뷰에서 Critical/Important 문제 없음.
+- production WebView2에서 Friday 페이지 이름, 네 열, 숨김·재로딩·복원과 테마 전환 검증 통과. pageerror 0. 프레임 유지율은 별도로 측정하지 않았다.

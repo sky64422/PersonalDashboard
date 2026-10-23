@@ -14,7 +14,7 @@ export const demoTasks: Task[] = taskRows.map(([key, title, project, status, pri
   id: key, key, title, project, status, priority, description, assigneeId: DEMO_USER_ID, updatedAt: `2026-10-22T${time}:00+09:00`,
 }));
 demoTasks.push(
-  { ...demoTasks[0], id: 'FW-200', key: 'FW-200', title: '종료된 예시 업무', status: 'Closed' },
+  { ...demoTasks[0], id: 'FW-200', key: 'FW-200', title: 'UART 진단 로그 누락 수정', status: 'Closed', priority: 'Medium', description: '진단 로그의 누락 원인을 수정하고 회귀 검증을 마쳤습니다. 릴리스 반영까지 확인한 업무입니다.' },
   { ...demoTasks[0], id: 'FW-201', key: 'FW-201', title: '다른 담당자의 예시 업무', assigneeId: 'demo-other' },
 );
 export const BUILD_TARGETS = ['Atlas A1', 'Atlas A2', 'Nova N1'];

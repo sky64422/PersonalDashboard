@@ -13,6 +13,7 @@ const tasks: Task[] = [
 const filters = { assigneeId: 'me', query: '', status: 'all', sort: 'priority' as const };
 describe('assigned task semantics', () => {
   it('excludes Closed and other assignees but retains Done', () => expect(filterTasks(tasks, filters).map(t => t.id)).toEqual(['4', '1']));
+  it('includes owned Closed work only when the board requests it', () => expect(filterTasks(tasks, filters, { includeClosed: true }).map(t => t.id)).toEqual(['2', '4', '1']));
   it('combines trimmed case-insensitive search and status', () => expect(filterTasks(tasks, { ...filters, query: ' BOOT ', status: 'In Progress' }).map(t => t.id)).toEqual(['1']));
   it('treats whitespace as an empty query and sorts updates', () => expect(filterTasks(tasks, { ...filters, query: '  ', sort: 'updated' }).map(t => t.id)).toEqual(['4', '1']));
   it('returns an empty result without mutating input', () => { expect(filterTasks(tasks, { ...filters, query: 'missing' })).toEqual([]); expect(tasks.map(t => t.id)).toEqual(['1', '2', '3', '4']); });

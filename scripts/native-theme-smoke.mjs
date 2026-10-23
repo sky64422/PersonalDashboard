@@ -19,7 +19,7 @@ await page.reload();
 await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 for (const view of ['My Tasks', 'Builds', 'Firmware', 'Overview']) {
   await page.getByRole('button', { name: view, exact: true }).click();
-  await expect(page.locator('.card').first()).toHaveCSS('background-color', 'rgb(30, 30, 28)');
+  await expect(page.locator(view === 'My Tasks' ? '.task-tile' : '.card').first()).toHaveCSS('background-color', view === 'My Tasks' ? 'rgb(34, 34, 31)' : 'rgb(30, 30, 28)');
 }
 await page.keyboard.press('Control+k');
 await expect(page.getByRole('listbox').getByRole('group')).toHaveCount(3);

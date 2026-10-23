@@ -10,9 +10,11 @@ UI를 바꾸지 않고 실제 데이터를 붙이려면 **샘플 데이터 공�
 
 1. 회사 Jira 종류, 인증 방식, 내 account ID/username, 프로젝트별 실제 상태명을 확인합니다.
 2. Rust 비동기 명령에서 API 조회·페이지 수집을 수행하고 UI 모델로 변환합니다.
-3. 사용자 요구는 **assignee = 현재 사용자, status != Closed**입니다. `statusCategory != Done`으로 바꾸면 Done이지만 Closed가 아닌 업무까지 누락됩니다. 현재 `filterTasks`와 테스트가 이 차이를 고정합니다.
+3. 모든 화면에서 **assignee = 현재 사용자**입니다. My Tasks 보드는 Closed를 포함하고, Overview와 통합 검색은 Closed를 제외합니다. `statusCategory != Done`으로 바꾸면 Resolved 업무까지 누락됩니다. `TASK_COLUMNS`는 To Do → Open, In Progress/In Review → Progress, Done → Resolved, Closed → Closed로 그룹화합니다. 실제 Jira 상태명에 맞게 이 매핑을 교체하세요.
 4. 실제로 Closed에 해당하는 상태가 여러 개면 매핑 정책을 명시하고 테스트를 추가합니다. Jira에서 Task 타입만 필요한지, Story/Bug 등도 포함할지 확인합니다. 현재 샘플은 일반 업무 목록이며 이슈 타입 API 필터는 구현하지 않았습니다.
 5. 네트워크 실패를 빈 업무 목록으로 치환하지 마세요. 로딩·빈 결과·오류·마지막 갱신 시각을 구분합니다.
+
+숨기기는 `friday.hidden-task-ids`에 이슈 ID 목록을 저장하는 로컬 표시 설정입니다. Jira 상태를 수정하지 않으며 홈·통합 검색에도 반영합니다. 보드의 **숨긴 업무**에서 복원할 수 있습니다. 회사 연동 시 계정/서버별 저장 범위를 정하고 안정적인 이슈 ID를 사용하세요. 저장 실패는 현재 세션에서만 적용되었다고 알립니다.
 
 ## Build system
 
@@ -61,3 +63,7 @@ API 검색인지 공유 폴더/UNC 경로 검색인지 먼저 정합니다. 후�
 | Rust 명령 등록 | `src-tauri/src/main.rs` |
 
 React UI는 브라우저에서도 실행되므로 연동 추가 시 native/browser 실행 경계를 명확히 하세요. 실제 연결 실패 시 샘플 데이터로 조용히 대체하지 마세요.
+
+### Jira 보드 모션
+
+Lucian UX/UI Prompt [#251](https://lucianlabs.dev/uxui-prompt/#251)의 순차 등장과 [#317](https://lucianlabs.dev/uxui-prompt/#317)의 정렬 이동을 참고해 `useBoardMotion.ts`를 독립 구현했습니다. 원본 코드 복사나 새 의존성은 없습니다. 카드는 260ms 동안 transform/opacity로 움직이고 등장 지연은 최대 110ms입니다. 정렬·숨기기 뒤 위치 이동을 보간하며 유휴 반복 작업은 없습니다. Windows 및 앱의 움직임 줄이기에서는 생략합니다.

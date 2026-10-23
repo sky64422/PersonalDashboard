@@ -10,7 +10,12 @@ export interface FirmwareArtifact { id: string; filename: string; model: string;
 export interface TaskFilters { assigneeId: string; query: string; status: string; sort: 'priority' | 'updated'; }
 export const DEMO_USER_ID = 'demo-me';
 export const ALL = 'all';
-export const PAGE_SIZE = 6;
+export const TASK_COLUMNS: { id: string; label: string; description: string; statuses: readonly TaskStatus[] }[] = [
+  { id: 'open', label: 'Open', description: '다음 시작을 기다리는 일', statuses: [TASK_STATUS.todo] },
+  { id: 'progress', label: 'Progress', description: '지금 만들어가는 중', statuses: [TASK_STATUS.progress, TASK_STATUS.review] },
+  { id: 'resolved', label: 'Resolved', description: '해결을 마치고 확인 중', statuses: [TASK_STATUS.done] },
+  { id: 'closed', label: 'Closed', description: '깔끔하게 마무리한 일', statuses: [TASK_STATUS.closed] },
+];
 export const PRIORITY_RANK: Record<Priority, number> = { High: 0, Medium: 1, Low: 2 };
 export const NAV_ITEMS: { id: ViewId; label: string; eyebrow: string; subtitle: string }[] = [
   { id: 'overview', label: 'Overview', eyebrow: 'YOUR DAILY WORKSPACE', subtitle: '중요한 일에 집중할 수 있도록, 필요한 모든 것을 한곳에.' },

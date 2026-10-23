@@ -16,11 +16,22 @@ for (const view of ['My Tasks', 'Builds', 'Firmware', 'Overview']) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 }
 await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
-const task = page.getByRole('button', { name: /FW-279/ });
+const task = page.locator('.task-open').filter({ hasText: 'FW-279' });
 await task.click();
 await expect(page.getByRole('dialog')).toBeVisible();
 await page.keyboard.press('Escape');
 await expect(task).toBeFocused();
+await expect(page).toHaveTitle('Friday — Personal workspace');
+await expect(page.locator('.task-column')).toHaveCount(4);
+await page.getByRole('button', { name: 'FW-284 숨기기', exact: true }).click();
+await expect(page.locator('.task-open').filter({ hasText: 'FW-284' })).toHaveCount(0);
+await page.reload();
+await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
+await expect(page.locator('.task-open').filter({ hasText: 'FW-284' })).toHaveCount(0);
+await page.getByRole('button', { name: /숨긴 업무/ }).click();
+await page.getByRole('button', { name: 'FW-284 다시 표시', exact: true }).click();
+await page.getByRole('button', { name: /숨긴 업무/ }).click();
+await expect(page.locator('.task-open')).toHaveCount(9);
 await page.keyboard.press('Control+k');
 await page.getByLabel('통합 검색어').fill('2.4.0');
 await expect(page.getByRole('option').first()).toBeVisible();
