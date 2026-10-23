@@ -1,3 +1,4 @@
+// Keep the storage key across the Friday rename to retain existing preferences.
 export const THEME_STORAGE_KEY = 'folio.theme';
 export const THEMES = [
   { id: 'light', name: 'Daylight', description: '밝고 선명한 업무 공간' },

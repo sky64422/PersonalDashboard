@@ -1,4 +1,4 @@
-# Folio · Personal Dashboard
+# Friday · Personal Dashboard
 
 Windows 11용 개인 업무 대시보드입니다. Jira 업무, 빌드, 펌웨어를 연결하기 전에 **UI/UX를 먼저 완성한 샘플 앱**입니다.
 

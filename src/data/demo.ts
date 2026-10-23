@@ -26,8 +26,8 @@ export const demoBuilds: Build[] = [
   { id: 'BLD-1039', target: 'Atlas A1', branch: 'main', profile: 'Release', status: 'Success', createdAt: '2026-10-21T17:40:00+09:00', duration: '4m 08s', demo: true },
 ];
 export const demoFirmware: FirmwareArtifact[] = [
-  { id: 'artifact-1', filename: 'atlas_a1_2.4.0_release.bin', model: 'Atlas A1', version: '2.4.0', branch: 'release/2.4.0', buildId: 'BLD-1042', path: 'C:\\FolioDemo\\firmware\\atlas_a1\\2.4.0\\atlas_a1_2.4.0_release.bin', size: '24.8 MB', createdAt: '2026-10-22' },
-  { id: 'artifact-2', filename: 'nova_n1_1.8.2_debug.bin', model: 'Nova N1', version: '1.8.2', branch: 'develop', buildId: 'BLD-1041', path: 'C:\\FolioDemo\\firmware\\nova_n1\\1.8.2\\nova_n1_1.8.2_debug.bin', size: '18.2 MB', createdAt: '2026-10-22' },
-  { id: 'artifact-3', filename: 'atlas_a1_2.3.9_release.bin', model: 'Atlas A1', version: '2.3.9', branch: 'main', buildId: 'BLD-1039', path: 'C:\\FolioDemo\\firmware\\atlas_a1\\2.3.9\\atlas_a1_2.3.9_release.bin', size: '24.6 MB', createdAt: '2026-10-21' },
-  { id: 'artifact-4', filename: 'atlas_a2_2.3.8_release.bin', model: 'Atlas A2', version: '2.3.8', branch: 'release/2.3.8', buildId: 'BLD-1037', path: 'C:\\FolioDemo\\firmware\\atlas_a2\\2.3.8\\atlas_a2_2.3.8_release.bin', size: '26.1 MB', createdAt: '2026-10-20' },
+  { id: 'artifact-1', filename: 'atlas_a1_2.4.0_release.bin', model: 'Atlas A1', version: '2.4.0', branch: 'release/2.4.0', buildId: 'BLD-1042', path: 'C:\\FridayDemo\\firmware\\atlas_a1\\2.4.0\\atlas_a1_2.4.0_release.bin', size: '24.8 MB', createdAt: '2026-10-22' },
+  { id: 'artifact-2', filename: 'nova_n1_1.8.2_debug.bin', model: 'Nova N1', version: '1.8.2', branch: 'develop', buildId: 'BLD-1041', path: 'C:\\FridayDemo\\firmware\\nova_n1\\1.8.2\\nova_n1_1.8.2_debug.bin', size: '18.2 MB', createdAt: '2026-10-22' },
+  { id: 'artifact-3', filename: 'atlas_a1_2.3.9_release.bin', model: 'Atlas A1', version: '2.3.9', branch: 'main', buildId: 'BLD-1039', path: 'C:\\FridayDemo\\firmware\\atlas_a1\\2.3.9\\atlas_a1_2.3.9_release.bin', size: '24.6 MB', createdAt: '2026-10-21' },
+  { id: 'artifact-4', filename: 'atlas_a2_2.3.8_release.bin', model: 'Atlas A2', version: '2.3.8', branch: 'release/2.3.8', buildId: 'BLD-1037', path: 'C:\\FridayDemo\\firmware\\atlas_a2\\2.3.8\\atlas_a2_2.3.8_release.bin', size: '26.1 MB', createdAt: '2026-10-20' },
 ];
