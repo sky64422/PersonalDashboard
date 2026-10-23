@@ -5,15 +5,15 @@ test('theme picker persists Midnight, styles portals and restores Daylight', asy
   await page.getByRole('button', { name: '워크스페이스 설정', exact: true }).click();
   await page.getByRole('radio', { name: /Midnight/ }).check();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await expect(page.getByRole('dialog')).toHaveCSS('background-color', 'rgb(29, 30, 39)');
+  await expect(page.getByRole('dialog')).toHaveCSS('background-color', 'rgb(30, 30, 28)');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   for (const view of ['My Tasks', 'Builds', 'Firmware', 'Overview']) {
     await page.getByRole('button', { name: view, exact: true }).click();
-    await expect(page.locator('.card').first()).toHaveCSS('background-color', 'rgb(29, 30, 39)');
+    await expect(page.locator('.card').first()).toHaveCSS('background-color', 'rgb(30, 30, 28)');
   }
   await page.keyboard.press('Control+k');
-  await expect(page.getByRole('dialog')).toHaveCSS('background-color', 'rgb(29, 30, 39)');
+  await expect(page.getByRole('dialog')).toHaveCSS('background-color', 'rgb(30, 30, 28)');
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: '워크스페이스 설정', exact: true }).click();
   await expect(page.getByRole('radio', { name: /Midnight/ })).toBeChecked();

@@ -25,7 +25,7 @@ test('clipboard icon confirms actual success, not denial', async ({ page, contex
 test('in-app reduced motion includes portal dialogs', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: '워크스페이스 설정', exact: true }).click();
-  await page.getByRole('checkbox', { name: '움직임 줄이기' }).check();
+  await page.getByRole('switch', { name: '움직임 줄이기' }).check();
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: /FW-284/ }).click();
   expect(await page.getByRole('dialog').evaluate(el => getComputedStyle(el).animationName)).toBe('none');

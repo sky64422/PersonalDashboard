@@ -1,7 +1,7 @@
 export const THEME_STORAGE_KEY = 'folio.theme';
 export const THEMES = [
   { id: 'light', name: 'Daylight', description: '밝고 선명한 업무 공간' },
-  { id: 'dark', name: 'Midnight', description: '차분한 차콜과 라벤더' },
+  { id: 'dark', name: 'Midnight', description: '차콜, 스톤, 아이보리' },
 ] as const;
 export type Theme = typeof THEMES[number]['id'];
 

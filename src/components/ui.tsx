@@ -32,7 +32,8 @@ export function PriorityBadge({ priority }: { priority: Priority }) {
   return <span className={`priority priority-${priority.toLowerCase()}`}><Icon size={13} />{priority}</span>;
 }
 export function SearchInput({ value, onChange, placeholder, label }: { value: string; onChange: (value: string) => void; placeholder: string; label: string }) {
-  return <div className="search-input"><Search size={16} /><input aria-label={label} placeholder={placeholder} value={value} onChange={event => onChange(event.target.value)} />{value && <button className="icon-button small" onClick={() => onChange('')} aria-label={`${label} 지우기`}><X size={14} /></button>}</div>;
+  const input = useRef<HTMLInputElement>(null);
+  return <div className="search-input"><Search size={16} /><input ref={input} aria-label={label} placeholder={placeholder} value={value} onChange={event => onChange(event.target.value)} />{value && <button type="button" className="icon-button small" onClick={() => { onChange(''); input.current?.focus(); }} aria-label={`${label} 지우기`}><X size={14} /></button>}</div>;
 }
 export function EmptyState({ onReset }: { onReset?: () => void }) {
   return <div className="empty-state"><Search size={28} /><h3>검색 결과가 없어요</h3><p>검색어나 필터를 바꿔 다시 찾아보세요.</p>{onReset && <button className="button secondary" onClick={onReset}>필터 초기화</button>}</div>;

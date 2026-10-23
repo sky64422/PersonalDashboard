@@ -56,6 +56,8 @@ npm run tauri -- build --no-bundle
 
 워크스페이스 설정 → **화면 테마**에서 Daylight / Midnight를 선택할 수 있습니다. 테마 선택은 이 장치에 저장되며 다음 실행에도 적용됩니다. 저장이 차단된 환경에서는 이번 실행에만 적용하고 알림을 표시합니다.
 
+Midnight는 차콜·스톤·아이보리 중심의 중성 팔레트입니다. `Ctrl K` 검색은 업무·빌드·펌웨어를 분류해 표시하며 방향키로 이동합니다. 설정의 움직임 줄이기 스위치는 클릭 또는 Space로 전환할 수 있습니다.
+
 ![Midnight 테마](docs/assets/midnight.png)
 
 - [연동 가이드](docs/company-handoff.md)

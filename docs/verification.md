@@ -37,3 +37,11 @@ Gr8r Studio 데모를 실제 브라우저에서 검토한 뒤 Overview 업무 �
 - `npm run build`, Rust format 검사 및 `npm run tauri -- build --no-bundle` 성공.
 - `node scripts/native-theme-smoke.mjs`: 실제 production WebView2에서 두 테마 전환, 저장 후 새로고침, 네 화면 및 상세 패널 배경 검사 통과. pageerror 0.
 - 네 화면과 설정, 900×700 화면을 캡처해 직접 확인했다. 테마는 CSS로 적용하며 런타임 의존성·반복 타이머를 추가하지 않았다.
+
+## 중성 팔레트 및 shadcn 참고 개선 — 2026-10-23
+
+- 다크 테마의 보라색 장식·그라데이션을 차콜·스톤·아이보리로 교체했다. 상태 배지만 청록·황토·녹색·적갈색을 사용한다.
+- 설정 스위치, 입력 그룹 포커스/오류, 검색 결과 그룹 및 스크롤, 검색어 지우기 후 포커스 복귀, 축소 사이드바의 접근 가능한 이름을 개선했다.
+- `npm run test:ui`: 13개 통과. `npm test`: 10개 통과. 프런트엔드 빌드, Rust format, Windows production 빌드 성공.
+- 독립 리뷰에서 Critical/Important 문제 없음. `node scripts/native-theme-smoke.mjs`: 실제 앱에서 테마·저장 복원·네 화면·상세 패널과 스위치 Space 전환, 검색 세 그룹 및 End 이동 스크롤 통과. pageerror 0.
+- 다크 네 화면·설정·검색과 밝은 테마, 작은 창 캡처를 검토했다. 추가 런타임 의존성 없음.

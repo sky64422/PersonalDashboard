@@ -34,5 +34,6 @@ SOFTWARE.
 - Bencho: https://bencho.dev/ — evaluated sidebar, copy field and form-error interaction patterns. No source code or paid assets imported.
 - Gr8r Studio: https://github.com/gr8rstudio/gr8r-studio/ and https://gr8r-taskmanagement.vercel.app/ — inspected the running home dashboard and adopted the idea of counted task-group switches. Implemented independently; no repository code, assets, or dependencies copied. No repository license was identified during review.
 - shadcn/ui: https://ui.shadcn.com/docs/components/radix/dialog — composition approach; dialogs use the Radix primitive directly with original styling.
+- shadcn/ui Theming, Switch, Input Group and Command documentation: https://ui.shadcn.com/docs/theming, https://ui.shadcn.com/docs/components/radix/switch, https://ui.shadcn.com/docs/components/radix/input-group, https://ui.shadcn.com/docs/components/radix/command — informed semantic foreground/surface pairs, clickable setting rows, input focus treatment and grouped command results. Implemented with existing React, native controls and Radix Dialog; no additional library or copied component source.
 
 Runtime and tooling package licenses remain with their respective packages. The npm and Cargo lockfiles record the dependencies used by this application.
