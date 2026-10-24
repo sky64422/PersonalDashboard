@@ -10,6 +10,7 @@ export function Modal({ open, onClose, title, description, children, panel = fal
   const content = open ? { title, description, children } : lastContent.current;
   return <Dialog.Root open={open} onOpenChange={value => { if (!value) onClose(); }}>
     <Dialog.Portal><Dialog.Overlay className="dialog-overlay" /><Dialog.Content className={panel ? 'dialog-content detail-panel' : 'dialog-content'}
+      aria-describedby={content.description ? undefined : undefined}
       onOpenAutoFocus={() => { returnFocus.current = document.activeElement as HTMLElement; }}
       onCloseAutoFocus={event => {
         event.preventDefault();
@@ -17,7 +18,7 @@ export function Modal({ open, onClose, title, description, children, panel = fal
         if (target?.isConnected && !target.closest('[role="dialog"][data-state="closed"]')) target.focus();
         else document.querySelector<HTMLElement>('nav [aria-current="page"]')?.focus();
       }}>
-      <div className="dialog-heading"><div><Dialog.Title>{content.title}</Dialog.Title><Dialog.Description>{content.description ?? '샘플 데이터를 사용하는 미리보기입니다.'}</Dialog.Description></div><Dialog.Close className="icon-button" aria-label="닫기"><X size={19} /></Dialog.Close></div>
+      <div className="dialog-heading"><div><Dialog.Title>{content.title}</Dialog.Title>{content.description && <Dialog.Description>{content.description}</Dialog.Description>}</div><Dialog.Close className="icon-button" aria-label="닫기"><X size={19} /></Dialog.Close></div>
       {content.children}
     </Dialog.Content></Dialog.Portal>
   </Dialog.Root>;
@@ -36,7 +37,7 @@ export function SearchInput({ value, onChange, placeholder, label }: { value: st
   return <div className="search-input"><Search size={16} /><input ref={input} aria-label={label} placeholder={placeholder} value={value} onChange={event => onChange(event.target.value)} />{value && <button type="button" className="icon-button small" onClick={() => { onChange(''); input.current?.focus(); }} aria-label={`${label} 지우기`}><X size={14} /></button>}</div>;
 }
 export function EmptyState({ onReset }: { onReset?: () => void }) {
-  return <div className="empty-state"><Search size={28} /><h3>검색 결과가 없어요</h3><p>검색어나 필터를 바꿔 다시 찾아보세요.</p>{onReset && <button className="button secondary" onClick={onReset}>필터 초기화</button>}</div>;
+  return <div className="empty-state"><Search size={28} /><h3>검색 결과가 없어요</h3>{onReset && <button className="button secondary" onClick={onReset}>필터 초기화</button>}</div>;
 }
 export function PanelHeading({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
   return <div className="panel-heading"><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>{action}</div>;

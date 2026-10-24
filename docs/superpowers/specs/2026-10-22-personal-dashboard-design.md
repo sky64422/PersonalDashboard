@@ -23,6 +23,7 @@ This preserves the approved web-style design freedom and provides desktop integr
 
 Use the stable sidebar and aligned card layouts from reference images 2–4, with restrained lavender and pale lime accents from image 1. Do not reproduce their medical or financial content.
 
+- 불필요한 세컨더리 라벨이나 설명을 피한다. 레이아웃으로 설명을 전달한다.
 - Light neutral canvas, near-white cards, charcoal text, thin low-contrast borders, subtle shadows.
 - Initial token targets: canvas #F5F5F7, surface #FFFFFF, text #24242A, muted text #62626D, lavender #E5DBFF, pale lime #E5F1CE. Validate contrast for actual text and states.
 - Sidebar approximately 216 CSS px; main content with 24–32 px padding and 16–24 px gaps. Cards use approximately 20 px radii; controls use smaller radii.
