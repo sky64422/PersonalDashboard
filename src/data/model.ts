@@ -20,7 +20,7 @@ export const TASK_COLUMNS: { id: string; label: string; statuses: readonly TaskS
 export const PRIORITY_RANK: Record<Priority, number> = { High: 0, Medium: 1, Low: 2 };
 export const NAV_ITEMS: { id: ViewId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
-  { id: 'tasks', label: 'My Tasks' },
+  { id: 'tasks', label: 'Jira Tasks' },
   { id: 'todos', label: 'To-Do' },
   { id: 'builds', label: 'Builds' },
   { id: 'firmware', label: 'Firmware' },

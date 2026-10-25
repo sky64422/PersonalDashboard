@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('board assigns each owned task once and filters a column without losing the layout', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
+  await page.getByRole('button', { name: 'Jira Tasks', exact: true }).click();
   const expected = [['Open', 3], ['Progress', 4], ['Resolved', 1], ['Closed', 1]] as const;
   for (const [name, count] of expected) {
     await expect(page.getByRole('region', { name, exact: true }).locator('.task-tile')).toHaveCount(count);
@@ -32,7 +32,7 @@ test('todo tab moves completed items to bottom and switches monthly clothesline 
   await expect(page.locator('.brand-name .brand-f')).toHaveText('F');
   await expect(page.getByRole('region', { name: '남아있는 TODO' })).toBeVisible();
   await page.getByRole('button', { name: 'To-Do', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '히스토리', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: '히스토리', exact: true })).toBeVisible();
 
   const monthTabs = page.getByRole('tablist', { name: '월별 히스토리 선택' }).getByRole('tab');
   await expect(monthTabs).toHaveCount(12);

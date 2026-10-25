@@ -1,19 +1,15 @@
 import { test, expect } from '@playwright/test';
 
-test('overview switches task groups and opens the matching detail', async ({ page }) => {
+test('overview opens task detail from prioritized task preview', async ({ page }) => {
   await page.goto('/');
-  const groups = page.getByRole('group', { name: '홈 업무 보기' });
-  await groups.getByRole('button', { name: /리뷰 대기/ }).click();
-  await expect(groups.getByRole('button', { name: /리뷰 대기/ })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('.overview-tasks .task-row')).toHaveCount(2);
-  await expect(page.locator('.overview-tasks .task-row').first()).toContainText('In Review');
+  await expect(page.locator('.overview-tasks .task-row')).toHaveCount(5);
   await page.locator('.overview-tasks').getByRole('button', { name: /FW-279/ }).click();
   await expect(page.getByRole('dialog')).toContainText('OTA 업데이트');
 });
 
 test('task filtering, reset, detail focus and persistent search', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
+  await page.getByRole('button', { name: 'Jira Tasks', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Closed', exact: true }).getByText('FW-200', { exact: true })).toBeVisible();
   await expect(page.getByText('FW-201', { exact: true })).toHaveCount(0);
   await page.getByLabel('업무 검색', { exact: true }).fill('롤백');
@@ -23,7 +19,7 @@ test('task filtering, reset, detail focus and persistent search', async ({ page 
   await page.keyboard.press('Escape');
   await expect(task).toBeFocused();
   await page.getByRole('button', { name: 'Builds', exact: true }).click();
-  await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
+  await page.getByRole('button', { name: 'Jira Tasks', exact: true }).click();
   await expect(page.getByLabel('업무 검색', { exact: true })).toHaveValue('롤백');
   await page.getByLabel('업무 검색', { exact: true }).fill('not-found');
   await expect(page.getByText('검색 결과가 없어요')).toBeVisible();
@@ -67,7 +63,7 @@ test('global search routes to task and overview firmware query transfers', async
   await expect(page.getByRole('dialog')).toContainText('OTA 업데이트');
   await expect(page.getByRole('combobox')).toHaveCount(0);
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('button', { name: 'My Tasks', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Jira Tasks', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Overview', exact: true }).click();
   await page.getByLabel('빠른 펌웨어 검색').fill('2.4.0');
   await page.getByLabel('빠른 펌웨어 검색').press('Enter');
@@ -81,7 +77,7 @@ test('responsive and reduced motion rendering without errors', async ({ page }) 
   await page.goto('/');
   for (const size of [{ width: 1440, height: 960 }, { width: 900, height: 700 }]) {
     await page.setViewportSize(size);
-    for (const view of ['Overview', 'My Tasks', 'Builds', 'Firmware']) {
+    for (const view of ['Overview', 'Jira Tasks', 'Builds', 'Firmware']) {
       await page.getByRole('button', { name: view, exact: true }).click();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }

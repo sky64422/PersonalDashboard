@@ -11,11 +11,11 @@ await expect(page.getByRole('heading', { level: 1 })).toContainText('Overview');
 await page.getByRole('group', { name: '홈 업무 보기' }).getByRole('button', { name: /리뷰 대기/ }).click();
 await expect(page.locator('.overview-tasks .task-row')).toHaveCount(2);
 await page.getByRole('group', { name: '홈 업무 보기' }).getByRole('button', { name: /우선순위/ }).click();
-for (const view of ['My Tasks', 'To-Do', 'Builds', 'Firmware', 'Overview']) {
+for (const view of ['Jira Tasks', 'To-Do', 'Builds', 'Firmware', 'Overview']) {
   await page.getByRole('button', { name: view, exact: true }).click();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 }
-await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
+await page.getByRole('button', { name: 'Jira Tasks', exact: true }).click();
 const task = page.locator('.task-open').filter({ hasText: 'FW-279' });
 await task.click();
 await expect(page.getByRole('dialog')).toBeVisible();
@@ -26,7 +26,7 @@ await expect(page.locator('.task-column')).toHaveCount(4);
 await page.getByRole('button', { name: 'FW-284 숨기기', exact: true }).click();
 await expect(page.locator('.task-open').filter({ hasText: 'FW-284' })).toHaveCount(0);
 await page.reload();
-await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
+await page.getByRole('button', { name: 'Jira Tasks', exact: true }).click();
 await expect(page.locator('.task-open').filter({ hasText: 'FW-284' })).toHaveCount(0);
 await page.getByRole('button', { name: /숨긴 업무/ }).click();
 await page.getByRole('button', { name: 'FW-284 다시 표시', exact: true }).click();

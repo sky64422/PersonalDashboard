@@ -26,7 +26,7 @@ test('compact settings stays named, switch supports keyboard, clear restores inp
   await page.keyboard.press('Space');
   await expect(motion).toBeChecked();
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
+  await page.getByRole('button', { name: 'Jira Tasks', exact: true }).click();
   const input = page.getByLabel('업무 검색', { exact: true });
   await input.fill('test');
   await page.getByRole('button', { name: '업무 검색 지우기' }).click();

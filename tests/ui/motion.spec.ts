@@ -27,6 +27,6 @@ test('in-app reduced motion includes portal dialogs', async ({ page }) => {
   await page.getByRole('button', { name: '워크스페이스 설정', exact: true }).click();
   await page.getByRole('switch', { name: '움직임 줄이기' }).check();
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: /FW-284/ }).click();
+  await page.locator('.overview-tasks .task-row').filter({ hasText: 'FW-284' }).click();
   expect(await page.getByRole('dialog').evaluate(el => getComputedStyle(el).animationName)).toBe('none');
 });

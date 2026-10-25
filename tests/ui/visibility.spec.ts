@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('hidden tasks persist, leave overview and search, and can be restored', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
+  await page.getByRole('button', { name: 'Jira Tasks', exact: true }).click();
   await page.getByRole('button', { name: 'FW-284 숨기기', exact: true }).click();
   await expect(page.locator('.task-open').filter({ hasText: 'FW-284' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Overview', exact: true }).click();
@@ -12,7 +12,7 @@ test('hidden tasks persist, leave overview and search, and can be restored', asy
   await expect(page.getByRole('option')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await page.reload();
-  await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
+  await page.getByRole('button', { name: 'Jira Tasks', exact: true }).click();
   await expect(page.locator('.task-open').filter({ hasText: 'FW-284' })).toHaveCount(0);
   await page.getByRole('button', { name: /숨긴 업무/ }).click();
   await page.getByRole('button', { name: /숨긴 업무/ }).hover();
@@ -25,14 +25,14 @@ test('hidden tasks persist, leave overview and search, and can be restored', asy
   await page.getByRole('button', { name: /숨긴 업무/ }).click();
   await expect(page.locator('.task-open').filter({ hasText: 'FW-284' })).toBeVisible();
   await page.reload();
-  await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
+  await page.getByRole('button', { name: 'Jira Tasks', exact: true }).click();
   await expect(page.locator('.task-open')).toHaveCount(9);
 });
 
 test('storage denial reports session-only hiding', async ({ page }) => {
   await page.addInitScript(() => { Storage.prototype.setItem = () => { throw new Error('denied'); }; });
   await page.goto('/');
-  await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
+  await page.getByRole('button', { name: 'Jira Tasks', exact: true }).click();
   await page.getByRole('button', { name: 'FW-284 숨기기', exact: true }).click();
   await expect(page.locator('.task-open').filter({ hasText: 'FW-284' })).toHaveCount(0);
   await expect(page.getByRole('status')).toContainText('저장');

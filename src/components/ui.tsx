@@ -39,6 +39,6 @@ export function SearchInput({ value, onChange, placeholder, label }: { value: st
 export function EmptyState({ onReset }: { onReset?: () => void }) {
   return <div className="empty-state"><Search size={28} /><h3>검색 결과가 없어요</h3>{onReset && <button className="button secondary" onClick={onReset}>필터 초기화</button>}</div>;
 }
-export function PanelHeading({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
+export function PanelHeading({ title, subtitle, action }: { title: ReactNode; subtitle?: string; action?: ReactNode }) {
   return <div className="panel-heading"><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>{action}</div>;
 }

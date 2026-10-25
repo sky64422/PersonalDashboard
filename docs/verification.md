@@ -1,5 +1,49 @@
 # 검증 기록
 
+## 시간대 배경과 네 영역의 시각적 통일 — 2026-10-25
+
+- Midnight에서도 아침은 따뜻한 회청색 하늘과 녹회색 산, 오후는 청회색 하늘로 표현한다. 밤은 기존 어두운 달빛 배경을 유지한다. 고정 시계로 09/15/23시를 각각 캡처해 확인했다 (`tmp/screenshots/overview-period-*.png`).
+- Jira/To-Do/빌드/펌웨어에 공통 상단 경계·페이드 표면·20px 안쪽 여백·17px 헤더를 적용했다. 높이가 다른 두 흐름은 유지하며 To-Do 상한은 680px에서 500px로 줄였다.
+- `npm run test:ui -- --workers=2`: 30개, `npm test`: 20개 통과. 프런트엔드 빌드, Rust format, Windows production 빌드 통과.
+- 실제 production WebView2에서 두 테마·네 화면·상세·검색·숨김 복원·테마 저장 복원을 검증했다. 두 native smoke 스크립트 통과, pageerror 0건. 최종 native 캡처를 검토하고 검증 앱을 종료했다.
+
+## Overview 콘텐츠·레이아웃 최종 조정 — 2026-10-25
+
+- Hero는 날짜·인사·풍경만 표시한다. 상단 날짜 배지, Hero 필박스, 포커스 강조 영역, 네비게이션 4개를 제거했다. 높이는 데스크톱에서 200~240px이며 풍경 채도/불투명도를 낮추고 얇은 유리 테두리를 유지했다.
+- 동일한 카드 4개 대신 왼쪽에 열린 업무·빌드 목록, 오른쪽에 To-Do 카드와 펌웨어 검색을 배치했다. 좁은 창은 업무 → To-Do → 빌드 → 펌웨어 순서를 유지한다.
+- 기본 업무 목록은 미완료 업무를 우선순위순으로 보여준다. 높은 데스크톱 창은 업무 5개·빌드 3개, 낮은 창은 3개·2개다. 1280×1360에서 하단 펌웨어 끝이 1200px 아래에 위치하는지 검사했다.
+- `npm run test:ui -- --workers=2`: 30개 통과. `npm test`: 20개 통과. 프런트엔드 빌드, Rust format, `npm run tauri -- build --no-bundle` 통과.
+- 브라우저 두 테마의 1440×960, 1280×1360, 900×960, 800×960 화면을 캡처했다. 가로 넘침과 pageerror 0건. 새 레이아웃 검사는 기존 카드 테두리와 부족한 업무 노출로 먼저 실패하는 것을 확인한 뒤 통과했다.
+- 별도 프로필의 production WebView2 1440×960에서 두 테마와 날짜 배치, 상세 열기, 탐색, 숨김 복원, 검색, 테마 저장 복원을 확인했다. `node scripts/native-smoke.mjs`, `node scripts/native-theme-smoke.mjs` 통과, pageerror 0건. 검증 앱은 종료했다.
+- 최종 캡처: `tmp/screenshots/overview-aligned-web-*.png`, `tmp/screenshots/overview-aligned-native-*.png`.
+
+## 사이드바 종이 질감 및 Overview 균형 개선 — 2026-10-24
+
+- 사이드바에 불규칙한 종이 주름 이미지를 낮은 대비로 적용했다. Daylight는 무채색의 밝은 배경, Midnight는 기존 차콜 질감을 유지한다.
+- My workspace는 박스 없는 작은 설정 바로가기로 낮추고, 선택 탭은 Daylight 차콜 / Midnight 브라스 채움으로 구분한다. 선택 글자 대비 4.5:1 이상, 이동 표시 정렬, 축소 메뉴를 검증했다.
+- Overview는 현황 요약 줄, My tasks / To-Do, Recent builds / Firmware의 두 열 구조다. 포커스 업무를 My tasks 안으로 옮겼고 긴 To-Do는 패널 내부에서 스크롤한다.
+- UI 테스트 30개, 단위 테스트 20개, 프런트엔드 빌드, Rust format 및 Windows production 빌드 통과. 긴 목록 추가·완료, 두 열의 시작/끝선과 하단 카드 위치, 800px 단일 열 전환을 검사했다.
+- 두 테마를 1440/1280/900/800px에서 캡처해 검토했다. 가로 넘침과 pageerror 0건. 900px 이상, 높이 960px에서 하단 카드까지 한 화면에 들어간다.
+- 별도 WebView2 프로필의 실제 production 앱에서 탐색, 업무 상세, 검색, 숨김 복원, 테마 전환 및 저장 복원을 확인했다. 1440×960에서 가로 넘침과 pageerror 0건. 검증 프로세스는 종료했다.
+- 독립 코드 리뷰에서 Important/Critical 문제 없음.
+
+## To-Do UI/UX 현대화 및 톤다운 앤틱 골드 다크 테마 개편 — 2026-10-24
+
+- **키보드 중심 To-Do 입력**: 불필요한 `+ 할 일 추가` 버튼을 제거하고, Enter 키 즉시 등록 및 Tab 키 하위 계층화 지원. 입력창은 포커스 시 앤틱 골드 링으로 시각적 피드백 제공.
+- **인터랙션 노이즈 억제**: 삭제 버튼(`.todo-delete-btn`)을 평소에는 숨기고 행 호버/포커스 시 부드럽게 노출. 드래그 앤 드롭 정렬 핸들(`GripVertical`)을 추가하고 `reorderTodos` 로직을 구현하여 할 일 순서 재배치 지원.
+- **레이아웃 밀도 및 3-Way 뷰 모드**:
+  - `전체 뷰` / `할 일 집중` / `히스토리` 모드 세그먼트 스위치 도입.
+  - 히스토리 접기/펼치기 토글 및 전체 기록 수 배지(`${activeEntries.length}일 기록`) 제공.
+  - 아날로그 집게 메타포(`.hanging-clip`)를 제거하고 모던 타임라인 카드 스타일로 정돈.
+  - 좌/우 스크롤 내비게이션 버튼(`.history-stage-scroll-btn.prev`, `.next`)으로 마우스 휠 외에도 부드러운 카드 탐색 지원.
+- **Anti-AI 다크 모드 컬러 개편**:
+  - 생성형 AI 특유의 네온 사이버 퍼플/시안 발광 효과를 배제하고, 차분한 **톤다운 앤틱 브라스/골드 (`#cca04b`)**를 핵심 악센트로 채택.
+  - 날짜가 지난 미완료 작업의 이월 배지(`.carried-badge`)는 테라코타 러스트(`rgba(215, 85, 35, 0.15)`, `#e07a4a`)로 구분.
+- **검증 결과**:
+  - `npm test`: 20개 도메인 단위 테스트 통과 (드래그 재정렬, 이월 로직 포함).
+  - `npm run test:ui`: 27개 Playwright E2E 테스트 전체 통과 (레이아웃, 키보드 입력, 다크 테마).
+  - `npm run build`: TypeScript 타입 체크 및 Vite 프로덕션 빌드 성공.
+
 ## 기록 수와 무관한 월 선택 배치 — 2026-10-24
 
 - 월 선택은 항상 1~12월을 표시한다. 기록 없는 월은 비활성화하고 툴팁에 기록 없음을 표시한다. 월 드래그와 가장자리 페이드는 제거했으며 연도 드래그는 유지한다.
@@ -116,3 +160,18 @@ Gr8r Studio 데모를 실제 브라우저에서 검토한 뒤 Overview 업무 �
 - **불필요한 세컨더리 라벨이나 설명을 피한다. 레이아웃으로 설명을 전달한다.** 원칙에 따라 앱 전반의 부제, 영문 eyebrow, 홍보성 배너/어사이드, 중복 캡션을 제거했다.
 - To-Do 화면의 상단 할 일 목록을 2열 스크롤 그리드로 정돈하고, 하단 히스토리의 삼중 박스 중첩을 제거해 `2 : 8` 월별 카드와 빨래줄 스테이지가 직접 대비되도록 구성했다 (`1440×900` 뷰포트 내 수직 넘침 0px).
 - 도메인 테스트 14개, UI 테스트 18개, 프런트엔드 프로덕션 빌드 통과.
+# Hero five-period landscape — 2026-10-25
+
+- Added fixed local-time dawn (04–06), morning (06–12), afternoon (12–16), sunset (16–19), night (19–04) scenes. Sunset has a lavender/apricot sky and low sun; dawn has blue ridge mist and a fading moon. Period selection retains the existing Overview mount-time evaluation.
+- `npm test`: 33 passed, including 13 period-boundary and midnight-trajectory checks. `npm run test:ui -- --workers=2`: 30 passed.
+- `npm run build`, `cargo fmt --manifest-path src-tauri/Cargo.toml -- --check`, and `npm run tauri -- build --no-bundle`: passed.
+- Fixed-clock Edge captures verified all five scenes in both themes. Sunset at 800/900/1440px had no horizontal overflow; visually inspected sunset/dawn captures and narrow layout.
+- Isolated production WebView2: native smoke and theme smoke passed with zero page errors; fixed-clock sunset rendering confirmed and inspected. Captures: `tmp/screenshots/hero-{period}-{theme}.png`, `tmp/screenshots/hero-sunset-native.png`.
+
+## Solid Overview panels and convex Hero rim - 2026-10-25
+
+- Removed the four panel fade gradients; applied continuous solid surfaces and borders. Work panels share a bounded row, with builds and firmware aligned in the utility row.
+- Strengthened the Hero perimeter reflections and lower inner shadow without a central blur overlay.
+- Passed: 33 unit tests, 30 UI tests (including aligned-row and solid-surface assertions), frontend build, Rust format check, and Tauri release build.
+- Inspected both themes at 1440/1280/900/800px, the tall 1280x1360 layout, and night Hero bevel. Production WebView2 smoke, theme persistence and detail navigation passed with zero page errors; native screenshot inspected.
+- Capture: `tmp/screenshots/overview-aligned-web-Midnight-1280.png`.

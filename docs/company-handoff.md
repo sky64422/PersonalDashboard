@@ -36,6 +36,20 @@ API 검색인지 공유 폴더/UNC 경로 검색인지 먼저 정합니다. 후�
 
 제품 표시 이름은 Friday입니다. 기존 사용자 설정을 유지하기 위해 내부 앱 식별자 `com.personaldashboard.folio`와 테마 저장 키 `folio.theme`는 호환성을 유지합니다. 이를 바꿀 때는 기존 데이터 디렉터리와 설정 마이그레이션이 필요합니다.
 
+## To-Do & 히스토리
+
+`src/features/todos/` 디렉터리가 일일 업무 체크리스트 및 과거 타임라인 히스토리를 담당합니다.
+
+1. **데이터 모델 및 상태 구조 (`todoModel.ts`)**:
+   - `TodoItem`: `id`, `text`, `done`, `carriedOver` (이전 날짜에서 미완료로 이월된 경우), `subtasks` (계층형 하위 항목), `order` (드래그 정렬 순서).
+   - `TodoDayHistory`: 특정 날짜(`dateKey`)의 완료/이월 통계 및 기록 목록.
+2. **현재 영속화 방식**:
+   - 로컬 스토리지 키 `friday.todos.v2`를 통해 브라우저 및 WebView2 로컬에 저장됩니다. 날짜가 변경되면 완료되지 않은 작업은 자동으로 다음 날짜로 이월 처리됩니다.
+3. **사내 실 시스템 연동 지점**:
+   - **로컬 전용 DB**: 대량 기록의 쿼리 성능과 파일 입출력 안정성을 위해 Tauri의 SQLite 플러그인(`@tauri-apps/plugin-sql` 또는 Rust `rusqlite`)으로 대체할 수 있습니다.
+   - **사내 태스크/캘린더 동기화**: `todoModel.ts`의 `loadTodos()`, `saveTodos()`를 Rust IPC 명령(`invoke('sync_todos')`)으로 교체하여 사내 서버와 오프라인 우선(Offline-first) 방식으로 동기화하도록 확장하세요.
+   - **대량 히스토리 스트레스 모드**: URL 쿼리 파라미터 `?todoHistory=large`가 활성화되면 수천 건의 가상 과거 기록을 생성하며, 이때는 로컬 저장소를 덮어쓰지 않고 샌드박스로 실행되므로 안전하게 대용량 렌더링 성능을 테스트할 수 있습니다.
+
 ## 설정과 인증
 
 현재 설정 화면은 연결 전 상태 안내와 움직임 옵션만 제공합니다. 실제 연결 설정 UI는 회사에서 구현합니다. 자격 증명을 프런트엔드 번들, `VITE_*`, localStorage, 소스·로그에 넣지 마세요. Rust 쪽에서 회사가 허용하는 자격 증명 저장소/SSO를 사용하고 필요한 Tauri capabilities만 추가합니다.
@@ -54,6 +68,8 @@ API 검색인지 공유 폴더/UNC 경로 검색인지 먼저 정합니다. 후�
 | 변경 | 위치 |
 | --- | --- |
 | 업무 의미/정렬 | `src/features/tasks/filter.ts` |
+| 할 일 상태/이월/정렬 | `src/features/todos/todoModel.ts` |
+| To-Do 화면/히스토리 뷰 | `src/features/todos/Todos.tsx` |
 | 빌드 입력 검증 | `src/features/builds/validation.ts` |
 | 펌웨어 검색 | `src/features/firmware/filter.ts` |
 | 데이터 타입/공통 상태 | `src/data/model.ts` |
@@ -62,6 +78,9 @@ API 검색인지 공유 폴더/UNC 경로 검색인지 먼저 정합니다. 후�
 | 팝업 접근성/포커스 복귀 | `src/components/ui.tsx` |
 | 통합 검색/방향키 | `src/components/GlobalSearch.tsx` |
 | Rust 명령 등록 | `src-tauri/src/main.rs` |
+| 시스템 아키텍처 문서 | `docs/architecture.md` |
+| 개발자 가이드 | `docs/contributing.md` |
+| 디자인 시스템 가이드 | `docs/theme-and-design-system.md` |
 
 React UI는 브라우저에서도 실행되므로 연동 추가 시 native/browser 실행 경계를 명확히 하세요. 실제 연결 실패 시 샘플 데이터로 조용히 대체하지 마세요.
 

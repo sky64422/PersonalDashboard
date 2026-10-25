@@ -10,7 +10,7 @@ test('board animates entrance and reflow, settles idle and respects reduced moti
     };
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'My Tasks', exact: true }).click();
+  await page.getByRole('button', { name: 'Jira Tasks', exact: true }).click();
   expect(await page.evaluate(() => (window as unknown as { boardMotion: unknown[] }).boardMotion.length)).toBeGreaterThan(0);
   await page.evaluate(() => {
     document.getAnimations().forEach(animation => animation.finish());
