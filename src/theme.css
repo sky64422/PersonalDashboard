@@ -66,6 +66,8 @@
   --history-stamp-border: rgba(204, 160, 75, 0.35);
   --history-search-match-bg: rgba(204, 160, 75, 0.28);
   --history-search-match-color: #fce7b8;
+  --history-search-match-bg: rgba(204, 160, 75, 0.28);
+  --history-search-match-color: #fce7b8;
 
   color: var(--text); background: var(--canvas);
 }
@@ -431,6 +433,52 @@ html[data-theme='dark'] {
     border: 1px solid rgba(204, 160, 75, 0.25);
   }
   .hanging-note-header { border-bottom-color: rgba(255, 255, 255, 0.08); }
+  .history-search-box {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  .history-search-box:focus-within,
+  .history-search-box.has-query {
+    border-color: var(--history-accent);
+    box-shadow: 0 0 0 2px var(--history-accent-border);
+  }
+  .history-search-clear-btn {
+    background: rgba(255, 255, 255, 0.12);
+    color: #94a3b8;
+  }
+  .history-search-clear-btn:hover {
+    background: var(--history-accent);
+    color: #121314;
+  }
+  .history-search-status-bar {
+    background: rgba(204, 160, 75, 0.08);
+    border-color: rgba(204, 160, 75, 0.25);
+  }
+  .history-search-status-badge {
+    background: #cca04b;
+    color: #121314;
+  }
+  .history-search-status-text strong {
+    color: #dfb76c;
+  }
+  .history-search-reset-btn {
+    background: #1e1f23;
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #e2e8f0;
+  }
+  .history-search-reset-btn:hover {
+    border-color: #cca04b;
+    color: #cca04b;
+  }
+  .history-search-empty-reset {
+    background: #1e1f23;
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #e2e8f0;
+  }
+  .history-search-empty-reset:hover {
+    border-color: #cca04b;
+    color: #cca04b;
+  }
 }
 
 

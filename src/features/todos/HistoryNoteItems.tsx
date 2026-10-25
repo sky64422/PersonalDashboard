@@ -1,11 +1,37 @@
-import { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { Check, CornerDownRight, ChevronDown, ChevronUp } from 'lucide-react';
 import type { DailyTodoLogEntry } from './todoModel';
 
 const COLLAPSED_ITEM_COUNT = 5;
 const COLLAPSE_LABEL = '접기';
 
-export const HistoryNoteItems = memo(function HistoryNoteItems({ entry }: { entry: DailyTodoLogEntry }) {
+function renderHighlightedText(text: string, query?: string): React.ReactNode {
+  const trimmed = query?.trim();
+  if (!trimmed) return text;
+
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  if (parts.length <= 1) return text;
+
+  return parts.map((part, index) => {
+    if (part.toLowerCase() === trimmed.toLowerCase()) {
+      return (
+        <mark key={index} className="history-search-match">
+          {part}
+        </mark>
+      );
+    }
+    return part;
+  });
+}
+
+export const HistoryNoteItems = memo(function HistoryNoteItems({
+  entry,
+  highlightQuery,
+}: {
+  entry: DailyTodoLogEntry;
+  highlightQuery?: string;
+}) {
   const [expanded, setExpanded] = useState(false);
   const records = useMemo(() => [
     ...entry.completedOnDay.map(item => ({ item, completed: true })),
@@ -22,7 +48,7 @@ export const HistoryNoteItems = memo(function HistoryNoteItems({ entry }: { entr
       {displayedRecords.map(({ item, completed }) => (
         <li key={item.id} className={`hanging-note-item ${completed ? 'is-done-note' : 'is-carry-note'}`}>
           {completed ? <Check size={12} className="event-icon done" /> : <CornerDownRight size={12} className="event-icon carry" />}
-          <span>{item.text}</span>
+          <span>{renderHighlightedText(item.text, highlightQuery)}</span>
         </li>
       ))}
     </ul>

@@ -497,6 +497,60 @@ export function buildMonthlyTodoGroups(todos: TodoItem[], todayKey: string): Mon
   });
 }
 
+/**
+ * Filter historical daily entries by search query across completed, added, and carried tasks.
+ */
+export function searchDailyTodoLog(
+  allEntries: DailyTodoLogEntry[],
+  query: string,
+): DailyTodoLogEntry[] {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) return allEntries;
+
+  const results: DailyTodoLogEntry[] = [];
+  for (const entry of allEntries) {
+    const matchingCompleted = entry.completedOnDay.filter(item =>
+      item.text.toLowerCase().includes(trimmed),
+    );
+    const matchingAdded = entry.addedOnDay.filter(item =>
+      item.text.toLowerCase().includes(trimmed),
+    );
+
+    if (matchingCompleted.length > 0 || matchingAdded.length > 0) {
+      results.push({
+        date: entry.date,
+        addedOnDay: matchingAdded,
+        completedOnDay: matchingCompleted,
+        carriedForwardFromDay: [],
+        isLatest: false,
+      });
+    }
+  }
+
+  if (results.length > 0) {
+    results[results.length - 1].isLatest = true;
+  }
+  return results;
+}
+
+const ARCHIVE_DEMO_YEARS = [2022, 2023, 2024, 2025];
+const ARCHIVE_DEMO_MONTHS = ['03', '06', '09', '12'];
+const ARCHIVE_DEMO_RECORDS = [
+  ['08', 'Atlas 전원 시퀀스 측정 및 보드 초기 구동 검증'],
+  ['12', '센서 수집 인터페이스 테스트와 SDK 예제 정리'],
+  ['18', 'OTA 롤백 시나리오 회귀 테스트 완료'],
+  ['24', '릴리스 산출물 검증 및 변경 사항 문서화'],
+];
+
+function createArchiveDemoTodos(): TodoItem[] {
+  return ARCHIVE_DEMO_YEARS.flatMap(year => ARCHIVE_DEMO_MONTHS.flatMap(month =>
+    ARCHIVE_DEMO_RECORDS.map(([day, text]) => {
+      const date = `${year}-${month}-${day}`;
+      return { id: `demo-archive-${date}`, text, createdAtDate: date, completedAtDate: date, done: true };
+    }),
+  ));
+}
+
 export function createDemoTodos(todayKey: string = formatDateKey()): TodoItem[] {
   const d18 = offsetDateKey(todayKey, -18);
   const d14 = offsetDateKey(todayKey, -14);
@@ -519,6 +573,7 @@ export function createDemoTodos(todayKey: string = formatDateKey()): TodoItem[] 
   const m2_d4 = offsetDateKey(todayKey, -74);
 
   return [
+    ...createArchiveDemoTodos(),
     {
       id: 'todo-1',
       text: 'Atlas A1 저전력 복귀 시나리오 전류 파형 재측정',
@@ -791,7 +846,12 @@ export function loadInitialTodos(todayKey: string = formatDateKey()): { todos: T
     if (!raw) return { todos: createDemoTodos(todayKey), error: '' };
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
-      return { todos: parsed, error: '' };
+      // Extend existing demo workspaces without replacing edits or duplicating archive records.
+      const ids = new Set(parsed.map((item: TodoItem) => item.id));
+      const archive = ids.has('todo-1')
+        ? createArchiveDemoTodos().filter(item => !ids.has(item.id))
+        : [];
+      return { todos: [...archive, ...parsed], error: '' };
     }
     return { todos: createDemoTodos(todayKey), error: '' };
   } catch {

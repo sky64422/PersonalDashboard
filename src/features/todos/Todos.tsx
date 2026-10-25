@@ -2,30 +2,25 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
   Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  Flame,
   GripVertical,
-  History,
-  Layers,
-  ListTodo,
   Plus,
+  Search,
   Trash2,
+  X,
 } from 'lucide-react';
+import { PanelHeading } from '../../components/ui';
 import { HistoryPeriodPicker } from './HistoryPeriodPicker';
 import { HistoryNoteItems } from './HistoryNoteItems';
 import type { TodoItem } from '../../data/model';
 import {
+  buildDailyTodoLog,
   buildMonthlyTodoGroups,
   formatKoreanDateLabel,
-  formatShortDate,
   getComposerTargetParent,
   getCurrentTodoList,
   getRemainingTodos,
-  isCarriedOver,
-} from './todoModel';
+  searchDailyTodoLog,
+  } from './todoModel';
 
 const REST_TILTS = [-1.4, 1.05, -0.85, 1.2, -0.65, 1.0];
 const LAST_MONTH_RECORD_LABEL = '이달 마지막 기록';
@@ -81,9 +76,6 @@ export function Todos({
   const dragState = useRef({ active: false, startX: 0, startScrollLeft: 0 });
   const motionRaf = useRef<number | null>(null);
 
-  // UX Highlighting & View Management
-  const [viewMode, setViewMode] = useState<'all' | 'tasks' | 'history'>('all');
-  const [historyCollapsed, setHistoryCollapsed] = useState(false);
   const [draggingTodoId, setDraggingTodoId] = useState<string | null>(null);
   const [dragOverTodoId, setDragOverTodoId] = useState<string | null>(null);
 
@@ -124,12 +116,7 @@ export function Todos({
     setDragOverTodoId(null);
   }
 
-  function scrollTrack(offset: number) {
-    const el = trackRef.current;
-    if (el) {
-      el.scrollBy({ left: offset, behavior: 'smooth' });
-    }
-  }
+
 
   const childrenMap = useMemo(() => buildChildrenMap(todos), [todos]);
 
@@ -145,6 +132,9 @@ export function Todos({
 
   const targetParent = getComposerTargetParent(todos, composerDepth);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const isSearching = searchQuery.trim().length > 0;
+
   const monthlyGroups = useMemo(() => buildMonthlyTodoGroups(todos, todayKey), [todos, todayKey]);
   const [selectedMonthKey, setSelectedMonthKey] = useState<string>(
     () => monthlyGroups[0]?.monthKey ?? '',
@@ -154,11 +144,27 @@ export function Todos({
     monthlyGroups.find(g => g.monthKey === selectedMonthKey) ?? monthlyGroups[0] ?? null;
   const activeEntries = activeGroup?.entries ?? [];
 
+  const allHistoricalEntries = useMemo(
+    () => buildDailyTodoLog(todos, todayKey),
+    [todos, todayKey],
+  );
+
+  const searchResults = useMemo(
+    () => (isSearching ? searchDailyTodoLog(allHistoricalEntries, searchQuery) : []),
+    [isSearching, allHistoricalEntries, searchQuery],
+  );
+
+  const displayedEntries = isSearching ? searchResults : activeEntries;
+
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
-    el.scrollLeft = el.scrollWidth;
-  }, [activeGroup?.monthKey, activeEntries.length]);
+    if (isSearching) {
+      el.scrollLeft = 0;
+    } else {
+      el.scrollLeft = el.scrollWidth;
+    }
+  }, [activeGroup?.monthKey, activeEntries.length, isSearching, searchQuery]);
 
   useEffect(() => {
     if (pendingFocus.current) {
@@ -465,7 +471,7 @@ export function Todos({
 
   function renderChildNode(child: TodoItem, depth: number) {
     const subChildren = childrenMap.get(child.id) ?? [];
-    const doneSubChildren = subChildren.filter(c => c.done).length;
+
     const isSelected = selectedTodoId === child.id;
     const isDraggingThis = draggingTodoId === child.id;
     const isDropTarget = dragOverTodoId === child.id;
@@ -512,11 +518,6 @@ export function Todos({
             onKeyDown={e => handleLineKeyDown(e, child)}
           />
           <div className="todo-item-badges">
-            {subChildren.length > 0 && (
-              <span className={`todo-badge track-badge ${child.done ? 'is-complete' : ''}`}>
-                {doneSubChildren}/{subChildren.length}
-              </span>
-            )}
             <button
               type="button"
               className="icon-button small todo-delete-btn"
@@ -542,9 +543,8 @@ export function Todos({
   }
 
   function renderTodoGroup(todo: TodoItem) {
-    const carried = isCarriedOver(todo, todayKey);
-    const children = childrenMap.get(todo.id) ?? [];
-    const doneChildren = children.filter(c => c.done).length;
+        const children = childrenMap.get(todo.id) ?? [];
+
     const hasTree = children.length > 0;
     const isSelected = selectedTodoId === todo.id;
     const isDraggingThis = draggingTodoId === todo.id;
@@ -556,7 +556,7 @@ export function Todos({
         className={`todo-group ${hasTree ? 'has-children' : ''} ${todo.done ? 'is-group-done' : ''}`}
       >
         <div
-          className={`todo-item-row ${todo.done ? 'is-done' : ''} ${carried ? 'is-carried' : ''} ${isSelected ? 'is-selected' : ''} ${isDraggingThis ? 'is-dragging-item' : ''} ${isDropTarget ? 'is-drop-target' : ''}`}
+          className={`todo-item-row ${todo.done ? 'is-done' : ''}  ${isSelected ? 'is-selected' : ''} ${isDraggingThis ? 'is-dragging-item' : ''} ${isDropTarget ? 'is-drop-target' : ''}`}
           data-todo-id={todo.id}
           draggable={!todo.done}
           onDragStart={e => handleDragStart(e, todo.id)}
@@ -594,18 +594,7 @@ export function Todos({
             onKeyDown={e => handleLineKeyDown(e, todo)}
           />
           <div className="todo-item-badges">
-            {children.length > 0 && (
-              <span className={`todo-badge track-badge ${todo.done ? 'is-complete' : ''}`}>
-                {doneChildren}/{children.length}
-              </span>
-            )}
-            {carried && (
-              <span className="todo-badge carried-badge">
-                <Flame size={11} />
-                {formatShortDate(todo.createdAtDate)} 이월
-              </span>
-            )}
-            {!todo.done && !carried && (
+            {!todo.done && todo.createdAtDate === todayKey && (
               <span className="todo-badge today-badge">오늘</span>
             )}
             {todo.done && (
@@ -637,169 +626,179 @@ export function Todos({
 
   return (
     <section className="todos-workspace" aria-label="누적 TODO 관리">
-      <div className="todo-view-mode-bar" role="toolbar" aria-label="보기 모드 선택">
-        <div className="view-mode-segment">
-          <button
-            type="button"
-            className={`view-mode-btn ${viewMode === 'all' ? 'active' : ''}`}
-            onClick={() => setViewMode('all')}
-            aria-pressed={viewMode === 'all'}
-            title="할 일 목록과 히스토리를 함께 봅니다"
-          >
-            <Layers size={13} />
-            <span>전체 뷰</span>
-          </button>
-          <button
-            type="button"
-            className={`view-mode-btn ${viewMode === 'tasks' ? 'active' : ''}`}
-            onClick={() => setViewMode('tasks')}
-            aria-pressed={viewMode === 'tasks'}
-            title="현재 할 일 목록에만 집중합니다"
-          >
-            <ListTodo size={13} />
-            <span>할 일 집중</span>
-          </button>
-          <button
-            type="button"
-            className={`view-mode-btn ${viewMode === 'history' ? 'active' : ''}`}
-            onClick={() => setViewMode('history')}
-            aria-pressed={viewMode === 'history'}
-            title="과거 완료 및 이월 기록을 넓게 탐색합니다"
-          >
-            <History size={13} />
-            <span>히스토리</span>
-          </button>
+      <section className="card todo-current-panel" aria-label="현재 해야 할 일">
+        <PanelHeading
+          title="List"
+          action={<span className="count-pill">{activeTodos.length}</span>}
+        />
+        <div className="todo-items-list">
+          {activeTodos.map(renderTodoGroup)}
         </div>
-      </div>
+        {renderComposerLine()}
 
-      {viewMode !== 'history' && (
-        <section className="card todo-current-panel" aria-label="현재 해야 할 일">
-          <div className="todo-items-list">
-            {activeTodos.map(renderTodoGroup)}
+        {completedTodayTodos.length > 0 && (
+          <div className="todo-completed-tray" aria-label="오늘 완료한 항목">
+            <div className="todo-completed-list">
+              {completedTodayTodos.map(renderTodoGroup)}
+            </div>
           </div>
-          {renderComposerLine()}
+        )}
+      </section>
 
-          {completedTodayTodos.length > 0 && (
-            <div className="todo-completed-tray" aria-label="오늘 완료한 항목">
-              <div className="todo-completed-list">
-                {completedTodayTodos.map(renderTodoGroup)}
+      <section className="card todo-clothesline-section" aria-label="히스토리">
+        <PanelHeading
+          title="History"
+          action={
+            <div className="history-header-actions">
+              <div className={`history-search-box ${searchQuery ? 'has-query' : ''}`}>
+                <Search size={13} className="history-search-icon" aria-hidden="true" />
+                <input
+                  type="text"
+                  className="history-search-input"
+                  aria-label="히스토리 검색"
+                  placeholder="과거 기록 검색… (Esc)"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Escape') setSearchQuery('');
+                  }}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="history-search-clear-btn"
+                    aria-label="검색어 지우기"
+                    title="검색어 지우기"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <X size={12} />
+                  </button>
+                )}
               </div>
+              <span className="count-pill">
+                {isSearching ? searchResults.length : activeEntries.length}
+              </span>
             </div>
+          }
+        />
+        <div className="todo-clothesline-body">
+          {isSearching ? (
+            <div className="history-search-status-bar" role="status">
+              <div className="history-search-status-info">
+                <span className="history-search-status-badge">검색 결과</span>
+                <span className="history-search-status-text">
+                  &ldquo;<strong>{searchQuery.trim()}</strong>&rdquo; 관련{' '}
+                  <span className="history-search-count-highlight">{searchResults.length}일치 기록 발견</span>
+                </span>
+              </div>
+              <button
+                type="button"
+                className="history-search-reset-btn"
+                onClick={() => setSearchQuery('')}
+              >
+                <X size={13} />
+                <span>검색 종료</span>
+              </button>
+            </div>
+          ) : (
+            <HistoryPeriodPicker
+              groups={monthlyGroups}
+              selectedMonth={activeGroup?.monthKey ?? ''}
+              onSelect={setSelectedMonthKey}
+            />
           )}
-        </section>
-      )}
 
-      {viewMode !== 'tasks' && (
-        <section className={`todo-clothesline-section ${historyCollapsed ? 'is-collapsed' : ''}`} aria-label="히스토리">
-          <div className="clothesline-heading">
-            <div className="clothesline-heading-left">
-              <h2>히스토리</h2>
-              <span className="history-count-badge">{activeEntries.length}일 기록</span>
-            </div>
-            <button
-              type="button"
-              className="history-collapse-toggle icon-button small"
-              aria-label={historyCollapsed ? '히스토리 펼치기' : '히스토리 접기'}
-              title={historyCollapsed ? '히스토리 펼치기' : '히스토리 접기'}
-              onClick={() => setHistoryCollapsed(c => !c)}
+          <div className="clothesline-stage-wrapper">
+            <div
+              className={`clothesline-stage ${isDragging ? 'is-dragging' : ''}`}
+              ref={trackRef}
+              onMouseDown={handleStageMouseDown}
+              onMouseUp={handleStageMouseUp}
+              onMouseMove={handleTrackMouseMove}
+              onMouseLeave={handleTrackMouseLeave}
+              role="region"
+              aria-label={isSearching ? `"${searchQuery}" 검색 결과 타임라인` : `${activeGroup?.label ?? ''} 누적 노트 라인`}
+              tabIndex={0}
             >
-              {historyCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-            </button>
-          </div>
-          {!historyCollapsed && (
-            <>
-              <HistoryPeriodPicker
-                groups={monthlyGroups}
-                selectedMonth={activeGroup?.monthKey ?? ''}
-                onSelect={setSelectedMonthKey}
-              />
-              <div className="clothesline-stage-wrapper">
-                <button
-                  type="button"
-                  className="history-stage-scroll-btn prev"
-                  aria-label="좌측 타임라인 카드 이동"
-                  title="이전 카드"
-                  onClick={() => scrollTrack(-320)}
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <div
-                  className={`clothesline-stage ${isDragging ? 'is-dragging' : ''}`}
-                  ref={trackRef}
-                  onMouseDown={handleStageMouseDown}
-                  onMouseUp={handleStageMouseUp}
-                  onMouseMove={handleTrackMouseMove}
-                  onMouseLeave={handleTrackMouseLeave}
-                  role="region"
-                  aria-label={`${activeGroup?.label ?? ''} 누적 노트 라인`}
-                  tabIndex={0}
-                >
-                  <div className="clothesline-track" key={activeGroup?.monthKey}>
-                    <div className="clothesline-wire" aria-hidden="true" />
-                    {activeEntries.map((entry, idx) => {
-                      const restTilt = REST_TILTS[idx % REST_TILTS.length];
-                      return (
-                        <article
-                          key={entry.date}
-                          ref={el => {
-                            noteRefs.current[idx] = el;
-                          }}
-                          className={`hanging-note ${entry.isLatest ? 'is-latest' : ''} ${
-                            hoveredIndex === idx ? 'is-peak' : ''
-                          }`}
-                          data-log-date={entry.date}
-                          style={
-                            {
-                              '--rest-tilt': `${restTilt}deg`,
-                              '--dynamic-tilt': `${restTilt}deg`,
-                              '--wave': 0,
-                            } as React.CSSProperties
-                          }
-                        >
-                          <div className="hanging-clip" aria-hidden="true">
-                            <span className="clip-ring" />
-                            <span className="clip-body" />
-                          </div>
-
-                          <div className="hanging-note-paper">
-                            <header className="hanging-note-header">
-                              <div className="hanging-date-row">
-                                <strong className="hanging-date-label">
-                                  {formatKoreanDateLabel(entry.date, todayKey)}
-                                </strong>
-                                {entry.isLatest && <span className="latest-stamp">{LAST_MONTH_RECORD_LABEL}</span>}
-                              </div>
-                              <div className="hanging-summary-pills">
-                                {entry.completedOnDay.length > 0 && (
-                                  <span className="day-pill completed">완료 {entry.completedOnDay.length}</span>
-                                )}
-                                {entry.carriedForwardFromDay.length > 0 && (
-                                  <span className="day-pill carried">이월 {entry.carriedForwardFromDay.length}</span>
-                                )}
-                              </div>
-                            </header>
-
-                            <HistoryNoteItems entry={entry} />
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
+              {displayedEntries.length === 0 ? (
+                <div className="history-search-empty">
+                  <Search size={26} className="history-empty-icon" aria-hidden="true" />
+                  <p className="history-empty-title">
+                    ‘{searchQuery.trim()}’ 관련 과거 기록이 없습니다.
+                  </p>
+                  <p className="history-empty-desc">철자를 확인하거나 다른 검색어를 입력해보세요.</p>
+                  <button
+                    type="button"
+                    className="history-search-empty-reset"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    검색 초기화
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="history-stage-scroll-btn next"
-                  aria-label="우측 타임라인 카드 이동"
-                  title="다음 카드"
-                  onClick={() => scrollTrack(320)}
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            </>
-          )}
-        </section>
-      )}
+              ) : (
+                <div className="clothesline-track" key={isSearching ? `search-${searchQuery}` : activeGroup?.monthKey}>
+                  <div className="clothesline-wire" aria-hidden="true" />
+                  {displayedEntries.map((entry, idx) => {
+                    const restTilt = REST_TILTS[idx % REST_TILTS.length];
+                    return (
+                      <article
+                        key={entry.date}
+                        ref={el => {
+                          noteRefs.current[idx] = el;
+                        }}
+                        className={`hanging-note ${entry.isLatest && !isSearching ? 'is-latest' : ''} ${
+                          hoveredIndex === idx ? 'is-peak' : ''
+                        }`}
+                        data-log-date={entry.date}
+                        style={
+                          {
+                            '--rest-tilt': `${restTilt}deg`,
+                            '--dynamic-tilt': `${restTilt}deg`,
+                            '--wave': 0,
+                          } as React.CSSProperties
+                        }
+                      >
+                        <div className="hanging-clip" aria-hidden="true">
+                          <span className="clip-ring" />
+                          <span className="clip-body" />
+                        </div>
+
+                        <div className="hanging-note-paper">
+                          <header className="hanging-note-header">
+                            <div className="hanging-date-row">
+                              <strong className="hanging-date-label">
+                                {formatKoreanDateLabel(entry.date, todayKey)}
+                              </strong>
+                              {entry.isLatest && !isSearching && (
+                                <span className="latest-stamp">{LAST_MONTH_RECORD_LABEL}</span>
+                              )}
+                              {isSearching && (
+                                <span className="history-search-card-year">
+                                  {entry.date.slice(0, 4)}년
+                                </span>
+                              )}
+                            </div>
+                            <div className="hanging-summary-pills">
+                              {entry.completedOnDay.length > 0 && (
+                                <span className="day-pill completed">완료 {entry.completedOnDay.length}</span>
+                              )}
+                              {entry.carriedForwardFromDay.length > 0 && (
+                                <span className="day-pill carried">이월 {entry.carriedForwardFromDay.length}</span>
+                              )}
+                            </div>
+                          </header>
+
+                          <HistoryNoteItems entry={entry} highlightQuery={isSearching ? searchQuery : undefined} />
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
     </section>
   );
 }
@@ -830,7 +829,7 @@ export function OverviewTodoSection({
   }
 
   return (
-    <section className="card overview-todos" aria-label="남아있는 TODO">
+    <section className="card overview-panel overview-todos" aria-label="남아있는 TODO">
       <div className="panel-heading">
         <div className="panel-title-inline">
           <h2>To-Do</h2>
@@ -842,25 +841,25 @@ export function OverviewTodoSection({
         </button>
       </div>
 
-      <form className="overview-todo-quick" onSubmit={submitQuick}>
-        <Plus size={15} />
+      <form className="overview-todo-quick todo-composer-row" onSubmit={submitQuick}>
+        <span className="todo-checkbox-box composer-plus-box" aria-hidden="true">
+          <Plus size={13} strokeWidth={2.5} className="composer-plus-icon" />
+        </span>
         <input
           type="text"
+          className="todo-line-input"
           aria-label="홈 빠른 할 일 추가"
-          placeholder="빠르게 할 일 기록 후 Enter…"
+          placeholder="새 할 일 입력… (Enter 등록)"
           value={quickText}
           onChange={e => setQuickText(e.target.value)}
         />
-        <button type="submit" disabled={!quickText.trim()} aria-label="홈 할 일 추가">
-          추가
-        </button>
+        <kbd className="key-hint">Enter 등록</kbd>
       </form>
 
       <div className="overview-todo-list">
         {remaining.map(todo => {
-          const carried = isCarriedOver(todo, todayKey);
-          const children = childrenMap.get(todo.id) ?? [];
-          const doneChildren = children.filter(c => c.done).length;
+                    const children = childrenMap.get(todo.id) ?? [];
+
           return (
             <div key={todo.id} className="overview-todo-group">
               <div className="overview-todo-row">
@@ -872,18 +871,13 @@ export function OverviewTodoSection({
                   className="todo-check-btn"
                   onClick={() => onToggle(todo.id)}
                 >
-                  <span className="todo-checkbox-box" />
+                  <span className="todo-checkbox-box">
+                    {todo.done && <Check size={13} strokeWidth={3} />}
+                  </span>
                   <span className="todo-item-text">{todo.text}</span>
                 </button>
                 <div className="todo-item-badges">
-                  {children.length > 0 && (
-                    <span className="todo-badge track-badge">
-                      {doneChildren}/{children.length}
-                    </span>
-                  )}
-                  {carried ? (
-                    <span className="todo-badge carried-badge">{formatShortDate(todo.createdAtDate)} 이월</span>
-                  ) : (
+                  {todo.createdAtDate === todayKey && (
                     <span className="todo-badge today-badge">오늘</span>
                   )}
                 </div>
@@ -892,7 +886,7 @@ export function OverviewTodoSection({
                 <div className="overview-subtodo-list">
                   {children.map(function renderOverviewSub(child) {
                     const subChildren = childrenMap.get(child.id) ?? [];
-                    const doneSubChildren = subChildren.filter(c => c.done).length;
+
                     return (
                       <div key={child.id} className="todo-subitem-group">
                         <div className={`todo-subitem-row ${child.done ? 'is-done' : ''}`}>
@@ -910,11 +904,6 @@ export function OverviewTodoSection({
                             </span>
                             <span className="todo-item-text">{child.text}</span>
                           </button>
-                          {subChildren.length > 0 && (
-                            <span className={`todo-badge track-badge ${child.done ? 'is-complete' : ''}`}>
-                              {doneSubChildren}/{subChildren.length}
-                            </span>
-                          )}
                         </div>
                         {subChildren.length > 0 && (
                           <div className="overview-subtodo-list is-nested">

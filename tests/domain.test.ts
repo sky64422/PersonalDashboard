@@ -13,7 +13,7 @@ it('large history covers 2020 through 2026 without carry records leaking into 20
 import { filterTasks } from '../src/features/tasks/filter';
 import { validateBuildRequest } from '../src/features/builds/validation';
 import { filterFirmware } from '../src/features/firmware/filter';
-import { addSubTodo, buildDailyTodoLog, buildMonthlyTodoGroups, getComposerTargetParent, getCurrentTodoList, getRemainingTodos, indentTodo, insertTodoAfter, isCarriedOver, outdentTodo, reorderTodos, toggleTodoWithHierarchy, updateTodoText } from '../src/features/todos/todoModel';
+import { addSubTodo, buildDailyTodoLog, buildMonthlyTodoGroups, getComposerTargetParent, getCurrentTodoList, getRemainingTodos, indentTodo, insertTodoAfter, isCarriedOver, outdentTodo, reorderTodos, searchDailyTodoLog, toggleTodoWithHierarchy, updateTodoText } from '../src/features/todos/todoModel';
 import type { Task, FirmwareArtifact, TodoItem } from '../src/data/model';
 
 const tasks: Task[] = [
@@ -175,5 +175,35 @@ describe('cumulative todo semantics', () => {
     // Prevent dragging parent into its own child
     const invalid = reorderTodos(list, '1', '1-sub');
     expect(invalid).toBe(list);
+  });
+
+  describe('searchDailyTodoLog', () => {
+    const historicalTodos: TodoItem[] = [
+      { id: '1', text: 'Atlas A1 저전력 복귀 시나리오', createdAtDate: '2026-10-20', done: true, completedAtDate: '2026-10-20' },
+      { id: '2', text: 'OTA 롤백 테스트 보드 점퍼 핀 배열', createdAtDate: '2026-10-21', done: true, completedAtDate: '2026-10-21' },
+      { id: '3', text: 'Atlas A2 워치독 타이머 임계치 조정', createdAtDate: '2026-10-22', done: true, completedAtDate: '2026-10-22' },
+      { id: '4', text: '릴리스 2.4.0 바이너리 SHA 검증', createdAtDate: '2026-10-23', done: true, completedAtDate: '2026-10-23' },
+    ];
+    const log = buildDailyTodoLog(historicalTodos, '2026-10-24');
+
+    it('returns all entries when query is empty or whitespace', () => {
+      expect(searchDailyTodoLog(log, '')).toBe(log);
+      expect(searchDailyTodoLog(log, '   ')).toBe(log);
+    });
+
+    it('filters entries containing query across dates and marks latest result', () => {
+      const results = searchDailyTodoLog(log, 'atlas');
+      expect(results.length).toBe(2);
+      expect(results[0].date).toBe('2026-10-20');
+      expect(results[1].date).toBe('2026-10-22');
+      expect(results[1].isLatest).toBe(true);
+      expect(results[0].isLatest).toBe(false);
+      expect(results[0].completedOnDay[0].text).toContain('Atlas');
+    });
+
+    it('returns empty array when no entries match query', () => {
+      const results = searchDailyTodoLog(log, 'NonExistentKeyword');
+      expect(results).toEqual([]);
+    });
   });
 });
