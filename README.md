@@ -1,81 +1,112 @@
 # Friday · Personal Dashboard
 
-Windows 11용 개인 업무 대시보드입니다. Jira 업무, 빌드, 펌웨어를 연결하기 전에 **UI/UX를 먼저 완성한 샘플 앱**입니다.
+Windows 11 환경을 위한 엔지니어링 개인 업무 대시보드입니다.  
+불필요한 부제나 장황한 안내 문구 없이 **직관적인 레이아웃과 카드 위계**로 정보를 전달하며, 인위적인 사이버 네온 컬러를 배제한 **물리적 페이퍼 질감과 톤다운 앤틱 브라스/골드** 감성을 제공합니다.
+
+---
+
+## 주요 기능 및 화면
+
+### 1. Overview (대시보드 홈)
+사용자의 현재 작업 상태를 한눈에 조망할 수 있는 중앙 허브입니다.
 
 ![Overview](docs/assets/overview.png)
 
-## UI/UX 원칙
+- **파노라마 천체 히어로**: 시간대(새벽/아침/오후/저녁/밤)에 따라 서정적으로 변화하는 태양/달과 산맥 배경 일러스트.
+- **균형 잡힌 Bento 그리드**: 좌측 To-Do 카드와 우측 Builds/Firmware 카드의 하단 끝선을 완벽히 일치시키고, 항목이 늘어나도 외부 레이아웃을 깨뜨리지 않고 내부 스크롤바가 생성되도록 고정.
+- **간결해진 핵심 업무 목록**: 하단에 전체 폭으로 Jira 업무를 배치하고, 불필요한 필터 버튼을 제거하여 직관적인 확인 지원.
 
-- **불필요한 세컨더리 라벨이나 설명을 피한다. 레이아웃으로 설명을 전달한다.**
-- 부제, 영문 슬로건(`eyebrow`), 중복 안내 문구 대신 카드의 비례·정렬·여백·구분감만으로 화면의 위계와 기능을 직관적으로 전달합니다.
+---
 
-## 구현된 화면
+### 2. To-Do & History (할 일 및 빨랫줄 히스토리)
+생산적인 일일 체크리스트와 아날로그 감성의 과거 기록 보관소입니다.
 
-- **Overview** — 내 업무 요약, 우선순위 업무, 남아있는 TODO, 최근 빌드, 빠른 펌웨어 검색
-- **My Tasks** — 내 업무를 Open / Progress / Resolved / Closed 보드로 표시(티켓·제목 중심 글라스 카드), 검색·정렬·상세 패널·로컬 숨기기/복원
-- **To-Do** — 3-Way 뷰 모드(전체 뷰 / 할 일 집중 / 히스토리), 드래그 앤 드롭 정렬 핸들, 키보드 중심(Enter 등록, Tab 하위 계층화) 입력, 미완료 자동 이월 및 테라코타 러스트 배지, 호버 시 노출되는 삭제 액션. 하단 히스토리는 접기/펼치기 및 모던 타임라인 카드와 좌우 부드러운 스크롤 내비게이션을 제공합니다.
-- **Builds** — 대상/브랜치/프로필 입력, 확인 후 데모 대기열에 한 번 추가, 이력 상세
-- **Firmware** — 모델·버전·브랜치·파일명 검색, 상세 정보, 실제 클립보드 복사
-- **공통** — `Ctrl+K` 검색, 방향키/Enter 선택, Escape 닫기, 메뉴 접기, 움직임 줄이기
+![To-Do History](docs/assets/todo-history.png)
 
-데이터와 경로는 모두 예시입니다. 실제 회사 API 호출, 빌드 실행, 파일 검색은 아직 없습니다. 데모 빌드는 재실행하면 초기화되고 테마·숨긴 업무·TODO는 유지됩니다. 숨기기는 Jira 상태를 바꾸지 않습니다.
+- **키보드 중심 워크플로우**: `Enter`로 즉시 등록, `Tab`과 `Shift+Tab`으로 자유로운 하위 및 하위의 하위 계층화 지원.
+- **정돈된 인터랙션**: 마우스 드래그 앤 드롭 순서 변경, 행 호버 시에만 나타나는 삭제 버튼, 완료 항목의 취소선을 배제한 깨끗한 가독성.
+- **빨랫줄 메모지 타임라인**: 와이어에 메탈릭 티타늄 클립으로 매달린 부드러운 곡률(`border-radius: 16px`)의 일별 메모 카드.
+- **연/월 피커**: 과거 연도와 월별 기록을 자유롭게 전환하며, 데이터가 없는 월도 깔끔한 알약 컨테이너로 시각적 일관성 유지.
 
-![Jira workflow board](docs/assets/tasks-board.png)
+---
 
-## 기술 구성
+### 3. History Search (스마트 필터링 타임라인)
+과거의 방대한 누적 일별 기록을 신속하게 찾아내는 타임라인 검색 기능입니다.
 
-Tauri 2 / Rust · React / TypeScript / Vite · Tailwind CSS / CSS tokens · Radix Dialog · Lucide
+![History Search](docs/assets/history-search.png)
 
-추가 애니메이션 프레임워크 없이 CSS와 Web Animations API로 구현했습니다. 반복 애니메이션이나 백그라운드 폴링은 없습니다.
+- **캡슐형 슬림 검색 바**: History 헤더 우측의 컴팩트 인풋 (`Esc` 키 및 `✕` 원클릭 초기화 지원).
+- **검색 상태 바 전환**: 검색어 입력 즉시 연/월 피커 자리에 `검색 상태 바`가 나타나 일치 기록 일수 표시 및 검색 종료 버튼 제공.
+- **키워드 하이라이트**: 메모 카드 내 매칭 텍스트에 테마 맞춤 하이라이트(`mark.history-search-match`) 적용.
+- **다년도 식별 뱃지**: 검색 결과 카드 헤더에 해당 연도 뱃지(`2022년`, `2026년` 등)를 자동 표기하여 직관적인 시점 파악 가능.
 
-## 실행
+---
 
-필수: Windows 11, Node.js 24 LTS, Rust stable MSVC toolchain, Visual Studio C++ Build Tools, WebView2 Runtime. UI 테스트는 Microsoft Edge를 사용합니다.
+### 4. Jira Tasks (워크플로우 칸반 보드)
+내게 할당된 티켓을 워크플로우 단계별로 관리합니다.
 
-```powershell
-npm ci
-npm run tauri -- dev
-```
+![Jira Tasks](docs/assets/tasks-board.png)
 
-브라우저에서 UI만 확인:
+- **4단계 컬럼**: `Open` → `Progress` → `Resolved` → `Closed`
+- **글라스 티켓 카드**: 드래그 앤 드롭 이동, 우선순위 배지, 상세 조회 모달.
+- **로컬 전용 숨김/복원**: 작업 완료 후 집중을 위해 보드에서 임시로 숨기거나 언제든 복원 가능.
 
+---
+
+### 5. Dual Themes (Daylight & Midnight)
+눈의 피로도를 낮추고 작업 몰입도를 높이는 두 가지 완성형 테마를 지원합니다.
+
+![Midnight Theme](docs/assets/midnight.png)
+
+- **Daylight (라이트 모드)**: 은은한 종이 질감(`sidebar-paper.png`) 배경과 부드러운 라벤더 포인트.
+- **Midnight (다크 모드)**: 차분한 딥 차콜 레이어와 고급스러운 톤다운 앤틱 브라스/골드(`--brand-f-accent: #cca04b`), 테라코타 러스트 이월 배지(`rgba(215, 85, 35, 0.15)`).
+
+---
+
+## 기술 스택
+
+- **Platform**: Tauri 2 (Rust) + Windows 11 WebView2
+- **Frontend**: React 19, TypeScript, Vite
+- **Styling**: Tailwind CSS, CSS Semantic Tokens, Web Animations API
+- **Primitives**: Radix UI Dialog, Lucide Icons
+- **Testing**: Vitest (Unit), Playwright (E2E)
+
+---
+
+## 실행 및 검증
+
+### 브라우저 환경 실행
 ```powershell
 npm run dev
 # http://127.0.0.1:1420
 ```
 
-대량 To-Do 히스토리 미리보기: `http://127.0.0.1:1420/?todoHistory=large`. 2020년 1월 1일부터 어제까지 하루 3~7개의 완료 기록을 기존 샘플에 추가합니다. 2026년 10월 기준 7개 연도, 82개월, 약 12,400개 기록이며, 이 주소에서 편집한 내용은 저장하지 않아 기존 할 일 데이터에 영향을 주지 않습니다.
+*대량 히스토리(약 12,400건) 미리보기: `http://127.0.0.1:1420/?todoHistory=large`*
 
-개발 서버는 로컬 전용이며 포트가 사용 중이면 종료합니다. `tauri dev`가 개발 서버를 실행하므로 위 두 명령을 동시에 실행하지 마세요.
-
-## 빌드와 검증
-
+### 데스크톱(Tauri) 앱 실행
 ```powershell
-npm test
-npm run test:ui
-npm run build
-cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
-npm run tauri -- build --no-bundle
+npm run tauri -- dev
 ```
 
-실행 파일: `src-tauri/target/release/personal-dashboard.exe`
+### 테스트 및 검증
+```powershell
+# Vitest 도메인/유틸 단위 테스트 (36 passed)
+npm test
 
-설치 프로그램·코드 서명·자동 업데이트는 이번 범위에 포함하지 않습니다. 브라우저 화면 캡처는 개발 서버 실행 후 `node scripts/capture-ui.mjs`로 생성합니다. 캡처와 테스트 로그는 Git에서 제외된 `tmp/`에 저장합니다.
+# Playwright E2E UI 테스트 (32 passed)
+npm run test:ui
 
-## 회사에서 이어서 개발하기
+# 프로덕션 빌드 검증
+npm run build
+```
 
-워크스페이스 설정 → **화면 테마**에서 Daylight / Midnight를 선택할 수 있습니다. 테마 선택은 이 장치에 저장되며 다음 실행에도 적용됩니다. 저장이 차단된 환경에서는 이번 실행에만 적용하고 알림을 표시합니다.
+---
 
-Midnight는 차콜·스톤·아이보리 중심의 중성 팔레트 위에 톤다운된 앤틱 브라스/골드(`--brand-f-accent: #cca04b`)와 테라코타 러스트를 결합하여 AI 틱한 사이버 네온 컬러를 배제한 차분한 감성을 제공합니다. `Ctrl K` 검색은 업무·빌드·펌웨어를 분류해 표시하며 방향키로 이동합니다. 설정의 움직임 줄이기 스위치는 클릭 또는 Space로 전환할 수 있습니다.
-
-![Midnight 테마](docs/assets/midnight.png)
+## 관련 문서
 
 - [시스템 아키텍처 가이드](docs/architecture.md)
-- [개발자 가이드 및 워크플로우](docs/contributing.md)
 - [디자인 시스템 및 테마 토큰](docs/theme-and-design-system.md)
-- [사내 환경 연동 가이드](docs/company-handoff.md)
-- [검증 기록](docs/verification.md)
-- [승인된 설계 사양](docs/superpowers/specs/2026-10-22-personal-dashboard-design.md)
-- [디자인 출처 및 라이선스](THIRD_PARTY_NOTICES.md)
-
-실제 UI 확인과 프레임 측정은 최종 Windows 장비에서 다시 수행하세요. 프레임과 리소스 사용량은 WebView2 버전·해상도·데이터량·하드웨어에 따라 달라집니다.
+- [Overview 레이아웃 계획](docs/overview-layout-plan.md)
+- [개발자 가이드 및 기여 방법](docs/contributing.md)
+- [사내 시스템 연동 핸드오프](docs/company-handoff.md)
+- [전체 검증 기록](docs/verification.md)

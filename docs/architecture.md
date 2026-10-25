@@ -40,16 +40,19 @@ PersonalDashboard/
 │   │   └── demo.ts              # 가상 개발용 목업 데이터
 │   ├── features/                # 도메인별 기능 모듈
 │   │   ├── overview/            # 통합 대시보드 요약 화면
+│   │   │   ├── Overview.tsx     # Overview 메인 (Bento 그리드, 하단 라인 정렬)
+│   │   │   ├── FairyTaleSky.tsx # 시간대별 서정적 천체 일러스트 뷰
+│   │   │   └── overview.css     # Bento 레이아웃 스타일
 │   │   ├── tasks/               # Jira 스타일 워크플로우 업무 보드 (Open/Progress/Resolved/Closed)
 │   │   │   ├── Tasks.tsx
 │   │   │   ├── filter.ts        # 업무 필터링 및 정렬 로직
 │   │   │   └── useBoardMotion.ts# 카드 진입 및 위치 이동 FLIP 애니메이션
 │   │   ├── todos/               # 일일 체크리스트 및 과거 히스토리 타임라인
-│   │   │   ├── Todos.tsx        # To-Do 메인 화면 (3-Way 뷰 모드 지원)
-│   │   │   ├── todoModel.ts     # 할 일 생성, 완료, 이월, 드래그 순서 재정렬 로직
+│   │   │   ├── Todos.tsx        # To-Do 화면 (빨랫줄 타임라인, 캡슐형 검색창)
+│   │   │   ├── todoModel.ts     # 할 일 생성/계층화/이월/순서재정렬 및 과거 로그 검색(searchDailyTodoLog)
 │   │   │   ├── demoHistory.ts   # 과거 일자별 히스토리 데이터 및 대량 목업
 │   │   │   ├── HistoryPeriodPicker.tsx # 연도/월 선택 그리드 바
-│   │   │   └── HistoryNoteItems.tsx    # 과거 히스토리 기록 카드 목록
+│   │   │   └── HistoryNoteItems.tsx    # 메모지 기록 렌더링 및 키워드 하이라이트(renderHighlightedText)
 │   │   ├── builds/              # 빌드 대기열 및 시뮬레이션
 │   │   │   ├── Builds.tsx
 │   │   │   └── validation.ts    # 빌드 제출 폼 검증
@@ -66,9 +69,10 @@ PersonalDashboard/
 │   ├── tauri.conf.json          # Tauri 창 설정 및 보안 권한 구성
 │   └── src/
 │       └── main.rs              # 윈도우 인스턴스 초기화 및 핸들러
-├── tests/                       # 자동화 테스트 슈트
-│   ├── domain.test.ts           # Vitest 도메인 단위 테스트
-│   └── ui/                      # Playwright E2E UI 인터랙션 테스트
+├── tests/                       # 자동화 테스트 슈트 (Vitest 36 tests, Playwright 32 tests)
+│   ├── celestial.test.ts        # 시간대별 천체 물리 계산 및 배경 매핑 단위 테스트
+│   ├── domain.test.ts           # Vitest 도메인 및 검색 단위 테스트
+│   └── ui/                      # Playwright E2E UI 인터랙션 테스트 (overview-layout, history-search 등)
 └── scripts/                     # 개발 자동화 및 캡처 스크립트
 ```
 

@@ -1,5 +1,27 @@
 # 검증 기록
 
+## To-Do History 검색 기능 및 Overview Bento 레이아웃 정렬 — 2026-10-26
+
+- **1안 스마트 필터링 타임라인 검색**:
+  - History 헤더 우측 슬림 캡슐 검색창 (`Esc` 및 `✕` 원클릭 지우기 지원).
+  - 검색 모드 전환 시 연/월 피커를 검색 결과 상태 바로 대체하고 일치 기록 일수 표시 (`"검색어" 관련 N일치 기록 발견`).
+  - 전체 누적 이력에서 일치하는 일별 로그(`searchDailyTodoLog`)만 타임라인에 필터링 렌더링.
+  - 메모 카드 본문 매칭 키워드에 `<mark class="history-search-match">` 테마별 하이라이트 적용.
+  - 다년도 검색 식별을 위한 연도 뱃지(`2022년`, `2026년` 등) 카드 헤더 자동 부착.
+- **Overview Bento 그리드 및 정렬 개선**:
+  - FairyTaleSky 파노라마 히어로를 전체 폭으로 배치하고 시간대별 천체 일러스트 적용.
+  - 중앙 To-Do 카드와 우측 Firmware 카드의 하단 끝선을 일치시키고, 내용 증가 시 내부 스크롤바가 생기도록 레이아웃 고정.
+  - Jira Tasks 하단 전체 폭 배치 및 불필요한 상태 필터 버튼 제거.
+- **디자인 시스템 및 테마 디테일 폴리싱**:
+  - 메모 카드 모서리 반경을 `border-radius: 16px`로 완화하여 대시보드 전체의 둥글둥글한 UI 톤과 조화.
+  - To-Do 완료 항목 취소선(strikethrough) 제거로 시각적 가독성 개선.
+  - 미드나잇 다크 모드의 티타늄 메탈 클립 핀, 체크박스 명도, 레이어 깊이감 최적화.
+  - 데이터가 없는 비활성화된 월(month) 버튼 대비 및 알약 컨테이너 가시성 복원.
+- **검증 결과**:
+  - `npm test`: 36개 단위 테스트 전체 통과 (`tests/celestial.test.ts`, `tests/domain.test.ts`).
+  - `npm run test:ui`: 32개 Playwright E2E UI 테스트 전체 통과 (`tests/ui/history-search.spec.ts`, `tests/ui/overview-layout.spec.ts` 포함).
+  - `npm run build`: TypeScript 컴파일 및 Vite 프로덕션 빌드 성공.
+
 ## 시간대 배경과 네 영역의 시각적 통일 — 2026-10-25
 
 - Midnight에서도 아침은 따뜻한 회청색 하늘과 녹회색 산, 오후는 청회색 하늘로 표현한다. 밤은 기존 어두운 달빛 배경을 유지한다. 고정 시계로 09/15/23시를 각각 캡처해 확인했다 (`tmp/screenshots/overview-period-*.png`).
