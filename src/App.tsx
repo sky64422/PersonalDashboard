@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Box, ChevronDown, FileBox, HelpCircle, LayoutGrid, ListTodo, PanelLeftClose, PanelLeftOpen, SlidersHorizontal, SquareCheck, X } from 'lucide-react';
-import { ALL, DEMO_USER_ID, NAV_ITEMS, type Build, type BuildRequest, type FirmwareArtifact, type Task, type TaskFilters, type TodoItem, type ViewId } from './data/model';
+import { ALL, DEMO_USER_ID, NAV_ITEMS, type Build, type BuildRequest, type FirmwareArtifact, type Task, type TaskFilters, type ViewId } from './data/model';
 import { demoBuilds, demoFirmware, demoTasks } from './data/demo';
 import { filterTasks } from './features/tasks/filter';
 import { HIDDEN_TASKS_STORAGE_KEY, initialHiddenTasks } from './features/tasks/visibility';
 import { TaskDetails, Tasks } from './features/tasks/Tasks';
 import { Todos } from './features/todos/Todos';
+import { useTodos } from './features/todos/useTodos';
 import { createLargeHistoryDemo } from './features/todos/demoHistory';
-import { addSubTodo, deleteTodoWithHierarchy, formatDateKey, getRemainingTodos, indentTodo, insertTodoAfter, loadInitialTodos, outdentTodo, reorderTodos, TODOS_STORAGE_KEY, toggleTodoWithHierarchy, updateTodoText } from './features/todos/todoModel';
+import { formatDateKey, getRemainingTodos } from './features/todos/todoModel';
+import { loadInitialTodos } from './features/todos/todoStorage';
 import { BuildDetails, Builds } from './features/builds/Builds';
 import { Firmware, FirmwareDetails } from './features/firmware/Firmware';
 import { Overview } from './features/overview/Overview';
@@ -30,7 +32,6 @@ export default function App() {
   const [view, setView] = useState<ViewId>(LARGE_HISTORY_PREVIEW ? 'todos' : 'overview');
   const [collapsed, setCollapsed] = useState(false);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const [todos, setTodos] = useState<TodoItem[]>(initialTodoState.todos);
   const [builds, setBuilds] = useState(demoBuilds);
   const [firmwareQuery, setFirmwareQuery] = useState('');
   const [model, setModel] = useState(ALL);
@@ -40,6 +41,8 @@ export default function App() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [info, setInfo] = useState<'settings' | 'help' | null>(null);
   const [notification, setNotification] = useState(initialThemeError || initialHiddenTasks.error || initialTodoState.error);
+  const todoActions = useTodos(initialTodoState.todos, todayKey, LARGE_HISTORY_PREVIEW, setNotification);
+  const { todos } = todoActions;
   const [hiddenTaskIds, setHiddenTaskIds] = useState(initialHiddenTasks.ids);
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -51,35 +54,6 @@ export default function App() {
 
   const searchOpenRef = useRef(searchOpen);
   searchOpenRef.current = searchOpen;
-
-  const pendingSaveTimeout = useRef<number | null>(null);
-  const latestTodosRef = useRef<TodoItem[]>(todos);
-  latestTodosRef.current = todos;
-
-  const saveToStorage = useCallback((items: TodoItem[]) => {
-    if (LARGE_HISTORY_PREVIEW) return;
-    try {
-      localStorage.setItem(TODOS_STORAGE_KEY, JSON.stringify(items));
-    } catch {
-      setNotification('할 일 목록을 저장하지 못했습니다. 이번 실행에만 적용됩니다.');
-    }
-  }, []);
-
-  const flushStorageSave = useCallback(() => {
-    if (pendingSaveTimeout.current !== null) {
-      clearTimeout(pendingSaveTimeout.current);
-      pendingSaveTimeout.current = null;
-      saveToStorage(latestTodosRef.current);
-    }
-  }, [saveToStorage]);
-
-  useEffect(() => {
-    window.addEventListener('beforeunload', flushStorageSave);
-    return () => {
-      flushStorageSave();
-      window.removeEventListener('beforeunload', flushStorageSave);
-    };
-  }, [flushStorageSave]);
 
   useEffect(() => {
     const handle = (event: KeyboardEvent) => {
@@ -99,70 +73,6 @@ export default function App() {
     return () => { delete document.documentElement.dataset.reducedMotion; };
   }, [reduceMotion]);
 
-  function persistTodos(next: TodoItem[], debounce = false) {
-    setTodos(next);
-    latestTodosRef.current = next;
-    if (LARGE_HISTORY_PREVIEW) return;
-
-    if (debounce) {
-      if (pendingSaveTimeout.current !== null) {
-        clearTimeout(pendingSaveTimeout.current);
-      }
-      pendingSaveTimeout.current = window.setTimeout(() => {
-        pendingSaveTimeout.current = null;
-        saveToStorage(next);
-      }, 350);
-    } else {
-      flushStorageSave();
-      saveToStorage(next);
-    }
-  }
-
-  function addTodo(text: string, parentId?: string): string {
-    const id = `todo-${crypto.randomUUID().slice(0, 8)}`;
-    if (parentId) {
-      persistTodos(addSubTodo(todos, parentId, text, todayKey, id));
-      return id;
-    }
-    const item: TodoItem = {
-      id,
-      text,
-      createdAtDate: todayKey,
-      done: false,
-    };
-    persistTodos([...todos, item]);
-    return id;
-  }
-
-  function handleUpdateTodoText(id: string, text: string) {
-    persistTodos(updateTodoText(todos, id, text), true);
-  }
-
-  function handleInsertTodoAfter(targetId: string): string {
-    const result = insertTodoAfter(todos, targetId, todayKey);
-    persistTodos(result.todos);
-    return result.createdId;
-  }
-
-  function handleIndentTodo(id: string) {
-    persistTodos(indentTodo(todos, id, todayKey));
-  }
-
-  function handleOutdentTodo(id: string) {
-    persistTodos(outdentTodo(todos, id, todayKey));
-  }
-
-  function toggleTodo(id: string) {
-    persistTodos(toggleTodoWithHierarchy(todos, id, todayKey));
-  }
-
-  function deleteTodo(id: string) {
-    persistTodos(deleteTodoWithHierarchy(todos, id, todayKey));
-  }
-
-  function handleReorderTodo(sourceId: string, targetId: string) {
-    persistTodos(reorderTodos(todos, sourceId, targetId));
-  }
   function submitBuild(request: BuildRequest) {
     setBuilds(current => [{ ...request, id: `DEMO-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, status: 'Queued', createdAt: new Date().toISOString(), duration: '—', demo: true }, ...current]);
     setNotification('데모 대기열에 추가했습니다. 실제 빌드는 실행되지 않았습니다.');
@@ -196,9 +106,9 @@ export default function App() {
     <main className="main-content">
       <div className={`page-content ${view === 'tasks' ? 'tasks-page' : ''} ${view === 'todos' ? 'todos-page' : ''}`}><div className="page-heading"><div><h1>{nav.label}</h1></div></div>
       <div className="view-content" key={view}>
-        {view === 'overview' && <Overview dateLabel={`${todayDate} ${todayWeekday}`} tasks={owned} todos={todos} todayKey={todayKey} onToggleTodo={toggleTodo} onAddTodo={addTodo} builds={builds} firmware={demoFirmware} navigate={setView} onTask={setTask} onBuild={setBuild} onFirmwareSearch={query => { setFirmwareQuery(query); setModel(ALL); setView('firmware'); }} />}
+        {view === 'overview' && <Overview dateLabel={`${todayDate} ${todayWeekday}`} tasks={owned} todos={todos} todayKey={todayKey} onToggleTodo={todoActions.onToggle} onAddTodo={todoActions.onAdd} builds={builds} firmware={demoFirmware} navigate={setView} onTask={setTask} onBuild={setBuild} onFirmwareSearch={query => { setFirmwareQuery(query); setModel(ALL); setView('firmware'); }} />}
         {view === 'tasks' && <Tasks tasks={demoTasks} filters={filters} setFilters={setFilters} onSelect={setTask} hiddenTaskIds={hiddenTaskIds} onToggleHidden={toggleTaskHidden} reduceMotion={reduceMotion} />}
-        {view === 'todos' && <Todos todos={todos} todayKey={todayKey} onAdd={addTodo} onUpdateText={handleUpdateTodoText} onInsertAfter={handleInsertTodoAfter} onIndent={handleIndentTodo} onOutdent={handleOutdentTodo} onToggle={toggleTodo} onDelete={deleteTodo} onReorder={handleReorderTodo} />}
+        {view === 'todos' && <Todos {...todoActions} todayKey={todayKey} />}
         {view === 'builds' && <Builds builds={builds} onSubmit={submitBuild} onSelect={setBuild} />}
         {view === 'firmware' && <Firmware records={demoFirmware} query={firmwareQuery} setQuery={setFirmwareQuery} model={model} setModel={setModel} onSelect={setArtifact} notify={setNotification} />}
       </div></div>

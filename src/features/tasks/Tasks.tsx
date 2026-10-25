@@ -1,16 +1,16 @@
 import { memo, useMemo, useState } from 'react';
-import { ArrowUpRight, Eye, EyeOff, ListFilter, SquareCheck, GitBranch, CalendarDays } from 'lucide-react';
+import { Eye, EyeOff, ListFilter, SquareCheck, GitBranch, CalendarDays } from 'lucide-react';
 import { ALL, TASK_COLUMNS, type Task, type TaskFilters } from '../../data/model';
 import { filterTasks } from './filter';
 import { useBoardMotion } from './useBoardMotion';
 import { EmptyState, Modal, PriorityBadge, SearchInput, StatusBadge } from '../../components/ui';
 
-export const TaskList = memo(function TaskList({ tasks, onSelect, compact = false }: { tasks: Task[]; onSelect: (task: Task) => void; compact?: boolean }) {
-  return <div className={`task-list ${compact ? 'compact' : ''}`}>
-    {!compact && <div className="task-table-head"><span>업무</span><span>상태</span><span>우선순위</span><span>프로젝트</span></div>}
+export const TaskList = memo(function TaskList({ tasks, onSelect }: { tasks: Task[]; onSelect: (task: Task) => void }) {
+  return <div className="task-list">
+    <div className="task-table-head"><span>업무</span><span>상태</span><span>우선순위</span><span>프로젝트</span></div>
     {tasks.map(task => <button className="task-row" key={task.id} onClick={() => onSelect(task)}>
-      <span className="task-main"><span className={`task-type ${task.project.startsWith('Atlas') ? 'lavender' : 'mint'}`}><SquareCheck size={16} /></span><span><span className="task-key">{task.key}</span><strong>{task.title}</strong>{compact && <span className="task-project">{task.project}</span>}</span></span>
-      <StatusBadge status={task.status} /><PriorityBadge priority={task.priority} />{!compact && <span className="task-project">{task.project}</span>}{compact && <ArrowUpRight className="row-arrow" size={17} />}
+      <span className="task-main"><span className={`task-type ${task.project.startsWith('Atlas') ? 'lavender' : 'mint'}`}><SquareCheck size={16} /></span><span><span className="task-key">{task.key}</span><strong>{task.title}</strong></span></span>
+      <StatusBadge status={task.status} /><PriorityBadge priority={task.priority} /><span className="task-project">{task.project}</span>
     </button>)}
   </div>;
 });

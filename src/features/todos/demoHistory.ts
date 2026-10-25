@@ -1,5 +1,6 @@
 import type { TodoItem } from '../../data/model';
-import { createDemoTodos, offsetDateKey } from './todoModel';
+import { offsetDateKey } from './todoModel';
+import { createDemoTodos } from './demoTodos';
 
 const HISTORY_START_DATE = '2020-01-01';
 const MIN_ITEMS_PER_DAY = 3;

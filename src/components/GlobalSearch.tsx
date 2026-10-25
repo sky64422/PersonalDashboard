@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import { ArrowUpRight, Box, FileBox, Search, SquareCheck } from 'lucide-react';
 import { Modal } from './ui';
 import type { Task, Build, FirmwareArtifact } from '../data/model';
+import { createTextMatcher } from '../data/search';
 
 const GROUP_LIMIT = 4;
 export function GlobalSearch({ open, onClose, tasks, builds, firmware, onTask, onBuild, onFirmware }: {
@@ -13,13 +14,13 @@ export function GlobalSearch({ open, onClose, tasks, builds, firmware, onTask, o
 
   const groups = useMemo(() => {
     if (!open) return [];
-    const normalized = query.trim().toLocaleLowerCase();
+    const matchesQuery = createTextMatcher(query);
     return [
       { id: 'tasks', label: '내 업무', items: tasks.map(task => ({ id: `task-${task.id}`, title: task.title, meta: `${task.key} · ${task.project}`, icon: SquareCheck, action: () => onTask(task) })) },
       { id: 'builds', label: '빌드', items: builds.map(build => ({ id: `build-${build.id}`, title: `${build.target} · ${build.branch}`, meta: `${build.id} · ${build.status}`, icon: Box, action: () => onBuild(build) })) },
       { id: 'firmware', label: '펌웨어', items: firmware.map(record => ({ id: `firmware-${record.id}`, title: record.filename, meta: `${record.model} · ${record.version} · ${record.buildId}`, icon: FileBox, action: () => onFirmware(record) })) },
     ].map(group => {
-      const matches = group.items.filter(item => `${item.title} ${item.meta}`.toLocaleLowerCase().includes(normalized));
+      const matches = group.items.filter(item => matchesQuery(`${item.title} ${item.meta}`));
       return { ...group, total: matches.length, items: matches.slice(0, GROUP_LIMIT) };
     }).filter(group => group.items.length);
   }, [open, query, tasks, builds, firmware, onTask, onBuild, onFirmware]);

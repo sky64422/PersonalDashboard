@@ -1,7 +1,5 @@
 import type { TodoItem } from '../../data/model';
 
-export const TODOS_STORAGE_KEY = 'friday.todos.v4';
-
 export function formatDateKey(date: Date = new Date()): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -41,18 +39,23 @@ export function getChildTodos(todos: TodoItem[], parentId: string): TodoItem[] {
   return todos.filter(todo => todo.parentId === parentId);
 }
 
-export function getDescendantIds(todos: TodoItem[], rootId: string): Set<string> {
-  const childrenMap = new Map<string, string[]>();
+export function buildChildrenMap(todos: TodoItem[]): Map<string, TodoItem[]> {
+  const map = new Map<string, TodoItem[]>();
   for (const item of todos) {
     if (item.parentId) {
-      let list = childrenMap.get(item.parentId);
+      let list = map.get(item.parentId);
       if (!list) {
         list = [];
-        childrenMap.set(item.parentId, list);
+        map.set(item.parentId, list);
       }
-      list.push(item.id);
+      list.push(item);
     }
   }
+  return map;
+}
+
+export function getDescendantIds(todos: TodoItem[], rootId: string): Set<string> {
+  const childrenMap = buildChildrenMap(todos);
 
   const result = new Set<string>();
   const queue: string[] = [rootId];
@@ -60,7 +63,7 @@ export function getDescendantIds(todos: TodoItem[], rootId: string): Set<string>
     const current = queue.shift()!;
     const children = childrenMap.get(current);
     if (children) {
-      for (const childId of children) {
+      for (const { id: childId } of children) {
         if (!result.has(childId)) {
           result.add(childId);
           queue.push(childId);
@@ -90,20 +93,8 @@ function syncAncestorsUpward(
 ): TodoItem[] {
   if (!startParentId) return todos;
 
-  const itemMap = new Map<string, TodoItem>();
-  const childrenMap = new Map<string, TodoItem[]>();
-
-  for (const item of todos) {
-    itemMap.set(item.id, item);
-    if (item.parentId) {
-      let list = childrenMap.get(item.parentId);
-      if (!list) {
-        list = [];
-        childrenMap.set(item.parentId, list);
-      }
-      list.push(item);
-    }
-  }
+  const itemMap = new Map(todos.map(item => [item.id, item]));
+  const childrenMap = buildChildrenMap(todos);
 
   const updates = new Map<string, { done: boolean; completedAtDate?: string }>();
   let currentParentId: string | undefined = startParentId;
@@ -394,418 +385,6 @@ export function deleteTodoWithHierarchy(
   return remaining;
 }
 
-export interface DailyTodoLogEntry {
-  date: string;
-  addedOnDay: TodoItem[];
-  completedOnDay: TodoItem[];
-  carriedForwardFromDay: TodoItem[];
-  isLatest: boolean;
-}
-
-export interface MonthlyTodoGroup {
-  monthKey: string;
-  label: string;
-  entries: DailyTodoLogEntry[];
-  totalDays: number;
-  totalCompleted: number;
-}
-
-export function buildDailyTodoLog(todos: TodoItem[], todayKey: string): DailyTodoLogEntry[] {
-  const addedByDate = new Map<string, TodoItem[]>();
-  const completedByDate = new Map<string, TodoItem[]>();
-  const changeDates = new Set<string>();
-
-  for (const todo of todos) {
-    if (todo.parentId) continue;
-
-    const created = todo.createdAtDate;
-    if (created && created < todayKey) {
-      changeDates.add(created);
-      let list = addedByDate.get(created);
-      if (!list) {
-        list = [];
-        addedByDate.set(created, list);
-      }
-      list.push(todo);
-    }
-
-    if (todo.done && todo.completedAtDate && todo.completedAtDate < todayKey) {
-      const completed = todo.completedAtDate;
-      changeDates.add(completed);
-      let list = completedByDate.get(completed);
-      if (!list) {
-        list = [];
-        completedByDate.set(completed, list);
-      }
-      list.push(todo);
-    }
-  }
-
-  const sortedDates = Array.from(changeDates).sort((a, b) => a.localeCompare(b));
-  const entries: DailyTodoLogEntry[] = [];
-
-  for (const date of sortedDates) {
-    const addedOnDay = addedByDate.get(date) ?? [];
-    const completedOnDay = completedByDate.get(date) ?? [];
-    if (addedOnDay.length === 0 && completedOnDay.length === 0) continue;
-
-    const carriedForwardFromDay = addedOnDay.filter(
-      t => (!t.done && date < todayKey) || (t.done && t.completedAtDate && t.completedAtDate > date),
-    );
-
-    entries.push({
-      date,
-      addedOnDay,
-      completedOnDay,
-      carriedForwardFromDay,
-      isLatest: false,
-    });
-  }
-
-  if (entries.length > 0) {
-    entries[entries.length - 1].isLatest = true;
-  }
-  return entries;
-}
-
-export function buildMonthlyTodoGroups(todos: TodoItem[], todayKey: string): MonthlyTodoGroup[] {
-  const allEntries = buildDailyTodoLog(todos, todayKey);
-  const byMonth = new Map<string, DailyTodoLogEntry[]>();
-
-  for (const entry of allEntries) {
-    const monthKey = entry.date.slice(0, 7);
-    const list = byMonth.get(monthKey) ?? [];
-    list.push({ ...entry, isLatest: false });
-    byMonth.set(monthKey, list);
-  }
-
-  const monthKeys = Array.from(byMonth.keys()).sort((a, b) => b.localeCompare(a));
-
-  return monthKeys.map(monthKey => {
-    const entries = byMonth.get(monthKey)!;
-    if (entries.length > 0) {
-      entries[entries.length - 1].isLatest = true;
-    }
-    const totalCompleted = entries.reduce((sum, e) => sum + e.completedOnDay.length, 0);
-    return {
-      monthKey,
-      label: formatMonthLabel(monthKey),
-      entries,
-      totalDays: entries.length,
-      totalCompleted,
-    };
-  });
-}
-
-/**
- * Filter historical daily entries by search query across completed, added, and carried tasks.
- */
-export function searchDailyTodoLog(
-  allEntries: DailyTodoLogEntry[],
-  query: string,
-): DailyTodoLogEntry[] {
-  const trimmed = query.trim().toLowerCase();
-  if (!trimmed) return allEntries;
-
-  const results: DailyTodoLogEntry[] = [];
-  for (const entry of allEntries) {
-    const matchingCompleted = entry.completedOnDay.filter(item =>
-      item.text.toLowerCase().includes(trimmed),
-    );
-    const matchingAdded = entry.addedOnDay.filter(item =>
-      item.text.toLowerCase().includes(trimmed),
-    );
-
-    if (matchingCompleted.length > 0 || matchingAdded.length > 0) {
-      results.push({
-        date: entry.date,
-        addedOnDay: matchingAdded,
-        completedOnDay: matchingCompleted,
-        carriedForwardFromDay: [],
-        isLatest: false,
-      });
-    }
-  }
-
-  if (results.length > 0) {
-    results[results.length - 1].isLatest = true;
-  }
-  return results;
-}
-
-const ARCHIVE_DEMO_YEARS = [2022, 2023, 2024, 2025];
-const ARCHIVE_DEMO_MONTHS = ['03', '06', '09', '12'];
-const ARCHIVE_DEMO_RECORDS = [
-  ['08', 'Atlas 전원 시퀀스 측정 및 보드 초기 구동 검증'],
-  ['12', '센서 수집 인터페이스 테스트와 SDK 예제 정리'],
-  ['18', 'OTA 롤백 시나리오 회귀 테스트 완료'],
-  ['24', '릴리스 산출물 검증 및 변경 사항 문서화'],
-];
-
-function createArchiveDemoTodos(): TodoItem[] {
-  return ARCHIVE_DEMO_YEARS.flatMap(year => ARCHIVE_DEMO_MONTHS.flatMap(month =>
-    ARCHIVE_DEMO_RECORDS.map(([day, text]) => {
-      const date = `${year}-${month}-${day}`;
-      return { id: `demo-archive-${date}`, text, createdAtDate: date, completedAtDate: date, done: true };
-    }),
-  ));
-}
-
-export function createDemoTodos(todayKey: string = formatDateKey()): TodoItem[] {
-  const d18 = offsetDateKey(todayKey, -18);
-  const d14 = offsetDateKey(todayKey, -14);
-  const d11 = offsetDateKey(todayKey, -11);
-  const d8 = offsetDateKey(todayKey, -8);
-  const d5 = offsetDateKey(todayKey, -5);
-  const d3 = offsetDateKey(todayKey, -3);
-  const d2 = offsetDateKey(todayKey, -2);
-  const d1 = offsetDateKey(todayKey, -1);
-
-  const m1_d1 = offsetDateKey(todayKey, -26);
-  const m1_d2 = offsetDateKey(todayKey, -31);
-  const m1_d3 = offsetDateKey(todayKey, -36);
-  const m1_d4 = offsetDateKey(todayKey, -41);
-  const m1_d5 = offsetDateKey(todayKey, -46);
-
-  const m2_d1 = offsetDateKey(todayKey, -56);
-  const m2_d2 = offsetDateKey(todayKey, -62);
-  const m2_d3 = offsetDateKey(todayKey, -68);
-  const m2_d4 = offsetDateKey(todayKey, -74);
-
-  return [
-    ...createArchiveDemoTodos(),
-    {
-      id: 'todo-1',
-      text: 'Atlas A1 저전력 복귀 시나리오 전류 파형 재측정',
-      createdAtDate: d3,
-      done: false,
-    },
-    {
-      id: 'todo-2',
-      text: 'OTA 롤백 테스트 보드 점퍼 핀 배열 최종 확인',
-      createdAtDate: d1,
-      done: false,
-    },
-    {
-      id: 'todo-3',
-      text: 'BLE 연결 끊김 복구 전략 투트랙 실험',
-      createdAtDate: todayKey,
-      done: false,
-    },
-    {
-      id: 'todo-3-a',
-      parentId: 'todo-3',
-      text: 'A안: Fast Advertising 인터벌 단축 재연결 측정',
-      createdAtDate: todayKey,
-      done: true,
-      completedAtDate: todayKey,
-    },
-    {
-      id: 'todo-3-b',
-      parentId: 'todo-3',
-      text: 'B안: Supervision Timeout 4s 연장 안정성 실험',
-      createdAtDate: todayKey,
-      done: false,
-    },
-    {
-      id: 'todo-4',
-      text: '신규 리비전 PCB 전원 시퀀스 오실로스코프 캡처',
-      createdAtDate: todayKey,
-      done: false,
-    },
-
-    // Completed today (shown at bottom of current list with strikethrough)
-    {
-      id: 'todo-5',
-      text: '릴리스 2.4.0 바이너리 SHA-256 체크섬 검증',
-      createdAtDate: todayKey,
-      done: true,
-      completedAtDate: todayKey,
-    },
-    {
-      id: 'todo-6',
-      text: '오전 빌드 큐 대기열 상태 점검',
-      createdAtDate: d1,
-      done: true,
-      completedAtDate: todayKey,
-    },
-
-    // Current month past days history
-    {
-      id: 'todo-7',
-      text: 'UART 진단 로그 누락 재현 조건 문서화',
-      createdAtDate: d3,
-      done: true,
-      completedAtDate: d1,
-    },
-    {
-      id: 'todo-8',
-      text: 'BLE 광고 패킷 인터벌 튜닝 값 적용',
-      createdAtDate: d1,
-      done: true,
-      completedAtDate: d1,
-    },
-    {
-      id: 'todo-9',
-      text: 'Atlas A2 워치독 타이머 타임아웃 임계치 조정',
-      createdAtDate: d2,
-      done: true,
-      completedAtDate: d2,
-    },
-    {
-      id: 'todo-10',
-      text: '플래시 파티션 테이블 오프셋 계산 스크립트 수정',
-      createdAtDate: d3,
-      done: true,
-      completedAtDate: d2,
-    },
-    {
-      id: 'todo-11',
-      text: '주간 펌웨어 빌드 타겟 브랜치 동기화',
-      createdAtDate: d3,
-      done: true,
-      completedAtDate: d3,
-    },
-    {
-      id: 'todo-12',
-      text: 'Nova N1 디버그 프로파일 심볼 테이블 크기 점검',
-      createdAtDate: d5,
-      done: true,
-      completedAtDate: d5,
-    },
-    {
-      id: 'todo-13',
-      text: '초기 부트로더 CRC 검증 루틴 코드 리뷰',
-      createdAtDate: d8,
-      done: true,
-      completedAtDate: d5,
-    },
-    {
-      id: 'todo-14',
-      text: '개발 환경 시리얼 모니터 보드레이트 프리셋 정리',
-      createdAtDate: d8,
-      done: true,
-      completedAtDate: d8,
-    },
-    {
-      id: 'todo-15',
-      text: 'I2C 버스 클럭 스트레칭 예외 처리 로직 추가',
-      createdAtDate: d11,
-      done: true,
-      completedAtDate: d11,
-    },
-    {
-      id: 'todo-16',
-      text: '센서 폴링 태스크 스택 오버플로 워터마크 확인',
-      createdAtDate: d14,
-      done: true,
-      completedAtDate: d11,
-    },
-    {
-      id: 'todo-17',
-      text: '테스트 지그 펌웨어 자동 플래싱 배치 파일 작성',
-      createdAtDate: d14,
-      done: true,
-      completedAtDate: d14,
-    },
-    {
-      id: 'todo-18',
-      text: 'RTOS 태스크 우선순위 테이블 정리 및 공유',
-      createdAtDate: d18,
-      done: true,
-      completedAtDate: d18,
-    },
-
-    // Previous month (-1 month) history
-    {
-      id: 'todo-19',
-      text: '슬립 모드 진입 전 GPIO 누설 전류 차단 설정',
-      createdAtDate: m1_d2,
-      done: true,
-      completedAtDate: m1_d1,
-    },
-    {
-      id: 'todo-20',
-      text: 'SPI DMA 전송 완료 인터럽트 핸들러 최적화',
-      createdAtDate: m1_d1,
-      done: true,
-      completedAtDate: m1_d1,
-    },
-    {
-      id: 'todo-21',
-      text: '배터리 잔량 ADC 캘리브레이션 커브 테이블 보정',
-      createdAtDate: m1_d2,
-      done: true,
-      completedAtDate: m1_d2,
-    },
-    {
-      id: 'todo-22',
-      text: 'OTA 이미지 서명 키 교체 테스트 수행',
-      createdAtDate: m1_d3,
-      done: true,
-      completedAtDate: m1_d3,
-    },
-    {
-      id: 'todo-23',
-      text: '하드웨어 리비전 B 핀맵 변경점 드라이버 반영',
-      createdAtDate: m1_d4,
-      done: true,
-      completedAtDate: m1_d3,
-    },
-    {
-      id: 'todo-24',
-      text: '메모리 덤프 추출용 Python 파서 스크립트 개선',
-      createdAtDate: m1_d4,
-      done: true,
-      completedAtDate: m1_d4,
-    },
-    {
-      id: 'todo-25',
-      text: '부트 로고 디스플레이 초기화 타이밍 단축',
-      createdAtDate: m1_d5,
-      done: true,
-      completedAtDate: m1_d5,
-    },
-
-    // Two months ago (-2 months) history
-    {
-      id: 'todo-26',
-      text: '외부 크리스탈 오실레이터 안정화 대기 시간 측정',
-      createdAtDate: m2_d1,
-      done: true,
-      completedAtDate: m2_d1,
-    },
-    {
-      id: 'todo-27',
-      text: '초기 보드 브링업 체크리스트 템플릿 생성',
-      createdAtDate: m2_d2,
-      done: true,
-      completedAtDate: m2_d1,
-    },
-    {
-      id: 'todo-28',
-      text: '프로토타입 보드 열화상 카메라 발열 포인트 기록',
-      createdAtDate: m2_d2,
-      done: true,
-      completedAtDate: m2_d2,
-    },
-    {
-      id: 'todo-29',
-      text: 'JTAG 디버거 드라이버 및 오픈오씨디 환경 구성',
-      createdAtDate: m2_d3,
-      done: true,
-      completedAtDate: m2_d3,
-    },
-    {
-      id: 'todo-30',
-      text: '신규 MCU SDK 레퍼런스 매뉴얼 레지스터 맵 정리',
-      createdAtDate: m2_d4,
-      done: true,
-      completedAtDate: m2_d4,
-    },
-  ];
-}
-
 export function reorderTodos(
   todos: TodoItem[],
   sourceId: string,
@@ -838,23 +417,4 @@ export function reorderTodos(
   const nextList = [...remaining];
   nextList.splice(targetIdx, 0, ...updatedCluster);
   return nextList;
-}
-
-export function loadInitialTodos(todayKey: string = formatDateKey()): { todos: TodoItem[]; error: string } {
-  try {
-    const raw = localStorage.getItem(TODOS_STORAGE_KEY);
-    if (!raw) return { todos: createDemoTodos(todayKey), error: '' };
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      // Extend existing demo workspaces without replacing edits or duplicating archive records.
-      const ids = new Set(parsed.map((item: TodoItem) => item.id));
-      const archive = ids.has('todo-1')
-        ? createArchiveDemoTodos().filter(item => !ids.has(item.id))
-        : [];
-      return { todos: [...archive, ...parsed], error: '' };
-    }
-    return { todos: createDemoTodos(todayKey), error: '' };
-  } catch {
-    return { todos: createDemoTodos(todayKey), error: '' };
-  }
 }

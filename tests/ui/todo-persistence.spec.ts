@@ -1,0 +1,50 @@
+import { test, expect } from '@playwright/test';
+import { TODOS_STORAGE_KEY } from '../../src/features/todos/todoStorage';
+
+test('editing flushes on reload and hierarchy commands preserve the latest text', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(key => localStorage.setItem(key, '[]'), TODOS_STORAGE_KEY);
+  await page.reload();
+  await page.clock.install();
+  await page.getByRole('button', { name: 'To-Do', exact: true }).click();
+  const composer = page.getByLabel('새 할 일 입력', { exact: true });
+  await composer.fill('부모');
+  await composer.press('Enter');
+  const parent = page.getByLabel('할 일 내용 편집').first();
+  await parent.fill('종료 직전 편집');
+  await page.reload();
+  await page.getByRole('button', { name: 'To-Do', exact: true }).click();
+  await expect(parent).toHaveValue('종료 직전 편집');
+  await parent.press('End');
+  await parent.press('Enter');
+  const child = page.getByLabel('할 일 내용 편집').nth(1);
+  await expect(child).toBeFocused();
+  await child.fill('하위 편집');
+  await child.press('Tab');
+  await expect(page.locator('.todo-subitem-row input')).toHaveValue('하위 편집');
+  await expect(child).toBeFocused();
+  await page.getByRole('checkbox', { name: '하위 편집 완료 체크', exact: true }).click();
+  const saved = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), TODOS_STORAGE_KEY);
+  expect(saved).toHaveLength(2);
+  const savedParent = saved.find((item: { text: string }) => item.text === '종료 직전 편집');
+  expect(savedParent).toMatchObject({ done: true });
+  expect(saved.find((item: { text: string }) => item.text === '하위 편집')).toMatchObject({ done: true, parentId: savedParent.id });
+});
+
+test('delayed edits survive view changes and storage denial stays visible', async ({ page }) => {
+  await page.goto('/');
+  await page.clock.install();
+  await page.getByRole('button', { name: 'To-Do', exact: true }).click();
+  const input = page.getByLabel('할 일 내용 편집').first();
+  await input.fill('저장 지연 검증');
+  await page.getByRole('button', { name: 'Overview', exact: true }).click();
+  await page.clock.runFor(400);
+  const saved = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), TODOS_STORAGE_KEY);
+  expect(saved.some((item: { text: string }) => item.text === '저장 지연 검증')).toBe(true);
+  await page.evaluate(() => { Storage.prototype.setItem = () => { throw new Error('storage denied'); }; });
+  await page.getByRole('button', { name: 'To-Do', exact: true }).click();
+  await input.fill('세션 편집');
+  await page.clock.runFor(400);
+  await expect(page.getByRole('status').filter({ hasText: '할 일 목록을 저장하지 못했습니다' })).toBeVisible();
+  await expect(input).toHaveValue('세션 편집');
+});

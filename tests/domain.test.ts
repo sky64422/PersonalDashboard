@@ -3,7 +3,7 @@ import { createLargeHistoryDemo } from '../src/features/todos/demoHistory';
 
 it('large history covers 2020 through 2026 without carry records leaking into 2019', () => {
   const todos = createLargeHistoryDemo('2026-10-24');
-  const groups = buildMonthlyTodoGroups(todos, '2026-10-24');
+  const groups = buildMonthlyTodoGroups(buildDailyTodoLog(todos, '2026-10-24'));
   expect(groups).toHaveLength(82);
   expect(groups.at(-1)?.monthKey).toBe('2020-01');
   expect(groups[0].monthKey).toBe('2026-10');
@@ -13,7 +13,8 @@ it('large history covers 2020 through 2026 without carry records leaking into 20
 import { filterTasks } from '../src/features/tasks/filter';
 import { validateBuildRequest } from '../src/features/builds/validation';
 import { filterFirmware } from '../src/features/firmware/filter';
-import { addSubTodo, buildDailyTodoLog, buildMonthlyTodoGroups, getComposerTargetParent, getCurrentTodoList, getRemainingTodos, indentTodo, insertTodoAfter, isCarriedOver, outdentTodo, reorderTodos, searchDailyTodoLog, toggleTodoWithHierarchy, updateTodoText } from '../src/features/todos/todoModel';
+import { addSubTodo, getComposerTargetParent, getCurrentTodoList, getRemainingTodos, indentTodo, insertTodoAfter, isCarriedOver, outdentTodo, reorderTodos, toggleTodoWithHierarchy, updateTodoText } from '../src/features/todos/todoModel';
+import { buildDailyTodoLog, buildMonthlyTodoGroups, searchDailyTodoLog } from '../src/features/todos/todoHistoryModel';
 import type { Task, FirmwareArtifact, TodoItem } from '../src/data/model';
 
 const tasks: Task[] = [
@@ -71,7 +72,7 @@ describe('cumulative todo semantics', () => {
       ...sampleTodos,
       { id: 't0', text: 'September work', createdAtDate: '2026-09-15', done: true, completedAtDate: '2026-09-15' },
     ];
-    const groups = buildMonthlyTodoGroups(multiMonthTodos, '2026-10-23');
+    const groups = buildMonthlyTodoGroups(buildDailyTodoLog(multiMonthTodos, '2026-10-23'));
     expect(groups.map(g => g.monthKey)).toEqual(['2026-10', '2026-09']);
     expect(groups[0].entries.map(e => e.date)).toEqual(['2026-10-20', '2026-10-22']);
     expect(groups[1].entries.map(e => e.date)).toEqual(['2026-09-15']);

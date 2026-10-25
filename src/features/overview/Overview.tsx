@@ -3,8 +3,9 @@ import { ArrowRight, ArrowUpRight, Box, GitBranch, Search } from 'lucide-react';
 import { PRIORITY_RANK, TASK_STATUS, type Build, type FirmwareArtifact, type Task, type TodoItem, type ViewId } from '../../data/model';
 import { PanelHeading, StatusBadge } from '../../components/ui';
 import { TaskList } from '../tasks/Tasks';
-import { OverviewTodoSection } from '../todos/Todos';
-import { FairyTaleSky, getCelestialState } from './FairyTaleSky';
+import { OverviewTodoSection } from '../todos/OverviewTodoSection';
+import { FairyTaleSky } from './FairyTaleSky';
+import { getCelestialState } from './celestial';
 
 const PREVIEW_LIMIT = 5;
 const BUILD_PREVIEW_LIMIT = 3;

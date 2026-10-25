@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatMonthLabel, type MonthlyTodoGroup } from './todoModel';
+import { formatMonthLabel } from './todoModel';
+import { type MonthlyTodoGroup } from './todoHistoryModel';
 
 const DRAG_THRESHOLD = 5;
 const PERIOD_LABELS = {

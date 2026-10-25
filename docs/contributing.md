@@ -78,6 +78,19 @@ npm run tauri -- build --no-bundle
 ```
 - 생성 파일: `src-tauri/target/release/personal-dashboard.exe`
 
+### 3.5 네이티브 화면 검증
+
+별도 WebView2 프로필을 사용하여 실제 저장 데이터를 보호합니다. 빌드한 실행 파일을 `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9227`, `WEBVIEW2_USER_DATA_FOLDER=<저장소 절대경로>\tmp\native-profile` 환경에서 실행한 다음:
+
+```powershell
+node scripts/native-smoke.mjs
+node scripts/native-theme-smoke.mjs
+```
+
+첫 스크립트는 기본 샘플 상태에서 시작하며 뷰 이동, To-Do 편집/종료 저장, 히스토리 검색, 업무 숨김/복원과 상세 포커스를 검사합니다. 두 번째는 Daylight/Midnight 전환과 저장, 포털 테마를 검사합니다. 결과/스크린샷은 `tmp/`에 저장됩니다. 검증 후 해당 프로세스를 종료하고 디버깅 환경 변수를 복구합니다.
+
+파일 이동 후 장시간 실행 중이던 Vite가 삭제된 모듈 경로를 유지하면 개발 서버를 재시작합니다. OS 클립보드를 사용하는 테스트가 병렬 실행에서 실패하면 `npm run test:ui -- --workers=1`로 전체 검증을 순차 실행하고 최초 실패도 기록합니다.
+
 ---
 
 ## 4. 테스트 작성 규칙 및 주의사항

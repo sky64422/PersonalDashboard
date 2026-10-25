@@ -10,7 +10,7 @@ export function Modal({ open, onClose, title, description, children, panel = fal
   const content = open ? { title, description, children } : lastContent.current;
   return <Dialog.Root open={open} onOpenChange={value => { if (!value) onClose(); }}>
     <Dialog.Portal><Dialog.Overlay className="dialog-overlay" /><Dialog.Content className={panel ? 'dialog-content detail-panel' : 'dialog-content'}
-      aria-describedby={content.description ? undefined : undefined}
+      aria-describedby={undefined}
       onOpenAutoFocus={() => { returnFocus.current = document.activeElement as HTMLElement; }}
       onCloseAutoFocus={event => {
         event.preventDefault();

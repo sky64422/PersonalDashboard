@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getCelestialState } from '../src/features/overview/FairyTaleSky';
+import { getCelestialState } from '../src/features/overview/celestial';
 
 describe('Overview time periods', () => {
   it.each([

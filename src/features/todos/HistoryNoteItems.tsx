@@ -1,6 +1,6 @@
 import React, { memo, useMemo, useState } from 'react';
 import { Check, CornerDownRight, ChevronDown, ChevronUp } from 'lucide-react';
-import type { DailyTodoLogEntry } from './todoModel';
+import type { DailyTodoLogEntry } from './todoHistoryModel';
 
 const COLLAPSED_ITEM_COUNT = 5;
 const COLLAPSE_LABEL = '접기';

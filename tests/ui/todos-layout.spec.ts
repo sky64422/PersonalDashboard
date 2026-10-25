@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { formatDateKey, TODOS_STORAGE_KEY } from '../../src/features/todos/todoModel';
+import { formatDateKey } from '../../src/features/todos/todoModel';
+import { TODOS_STORAGE_KEY } from '../../src/features/todos/todoStorage';
 
 test('large history preview spans many months without overwriting saved todos', async ({ page }) => {
   await page.addInitScript(key => localStorage.setItem(key, '[]'), TODOS_STORAGE_KEY);

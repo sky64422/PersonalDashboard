@@ -93,7 +93,7 @@ npm run tauri -- dev
 # Vitest 도메인/유틸 단위 테스트 (36 passed)
 npm test
 
-# Playwright E2E UI 테스트 (32 passed)
+# Playwright E2E UI 테스트
 npm run test:ui
 
 # 프로덕션 빌드 검증

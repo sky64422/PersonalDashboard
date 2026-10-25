@@ -37,19 +37,28 @@ PersonalDashboard/
 │   │   └── ui.tsx               # 모달, 다이얼로그 래퍼 등 UI 공통 컴포넌트
 │   ├── data/                    # 도메인 모델 및 샘플 데이터
 │   │   ├── model.ts             # 핵심 도메인 타입 정의 (Task, Build, Firmware 등)
+│   │   ├── search.ts            # 업무/펌웨어/전역 검색의 문자열 매칭 정책
 │   │   └── demo.ts              # 가상 개발용 목업 데이터
 │   ├── features/                # 도메인별 기능 모듈
 │   │   ├── overview/            # 통합 대시보드 요약 화면
 │   │   │   ├── Overview.tsx     # Overview 메인 (Bento 그리드, 하단 라인 정렬)
 │   │   │   ├── FairyTaleSky.tsx # 시간대별 서정적 천체 일러스트 뷰
+│   │   │   ├── celestial.ts    # 시간대와 천체 위치의 순수 계산
 │   │   │   └── overview.css     # Bento 레이아웃 스타일
 │   │   ├── tasks/               # Jira 스타일 워크플로우 업무 보드 (Open/Progress/Resolved/Closed)
 │   │   │   ├── Tasks.tsx
 │   │   │   ├── filter.ts        # 업무 필터링 및 정렬 로직
 │   │   │   └── useBoardMotion.ts# 카드 진입 및 위치 이동 FLIP 애니메이션
 │   │   ├── todos/               # 일일 체크리스트 및 과거 히스토리 타임라인
-│   │   │   ├── Todos.tsx        # To-Do 화면 (빨랫줄 타임라인, 캡슐형 검색창)
-│   │   │   ├── todoModel.ts     # 할 일 생성/계층화/이월/순서재정렬 및 과거 로그 검색(searchDailyTodoLog)
+│   │   │   ├── Todos.tsx        # 편집기와 히스토리 화면 조합
+│   │   │   ├── TodoEditor.tsx   # 계층 편집, 키보드 포커스, 드래그 순서 변경
+│   │   │   ├── TodoHistory.tsx  # 히스토리 검색, 월 선택, 카드 모션
+│   │   │   ├── OverviewTodoSection.tsx # 홈 미리보기와 빠른 추가
+│   │   │   ├── useTodos.ts      # 상태, 편집 명령, 지연 저장 및 종료 flush
+│   │   │   ├── todoModel.ts     # 날짜 및 계층 생성/완료/이동/삭제 순수 함수
+│   │   │   ├── todoHistoryModel.ts # 일별 로그, 월 그룹, 기록 검색 순수 함수
+│   │   │   ├── todoStorage.ts   # 저장 키와 기존 데이터 초기 로딩
+│   │   │   ├── demoTodos.ts     # 기본 샘플 및 과거 샘플 데이터
 │   │   │   ├── demoHistory.ts   # 과거 일자별 히스토리 데이터 및 대량 목업
 │   │   │   ├── HistoryPeriodPicker.tsx # 연도/월 선택 그리드 바
 │   │   │   └── HistoryNoteItems.tsx    # 메모지 기록 렌더링 및 키워드 하이라이트(renderHighlightedText)
@@ -69,7 +78,7 @@ PersonalDashboard/
 │   ├── tauri.conf.json          # Tauri 창 설정 및 보안 권한 구성
 │   └── src/
 │       └── main.rs              # 윈도우 인스턴스 초기화 및 핸들러
-├── tests/                       # 자동화 테스트 슈트 (Vitest 36 tests, Playwright 32 tests)
+├── tests/                       # 단위 및 브라우저 회귀 테스트
 │   ├── celestial.test.ts        # 시간대별 천체 물리 계산 및 배경 매핑 단위 테스트
 │   ├── domain.test.ts           # Vitest 도메인 및 검색 단위 테스트
 │   └── ui/                      # Playwright E2E UI 인터랙션 테스트 (overview-layout, history-search 등)
@@ -94,18 +103,32 @@ flowchart TD
     App --> FirmwareView["Firmware Feature"]
     App --> SearchModal["GlobalSearch (Ctrl+K)"]
     
-    TodosView --> TodoState["Local Todos State<br/>(todoModel.ts)"]
-    TodoState -->|persist| LocalStorageTodos["localStorage('friday.todos.v2')"]
+    App --> TodoState["useTodos<br/>state + commands + persistence"]
+    TodoState --> TodosView
+    TodoState --> OverviewView
+    TodoState -->|persist| LocalStorageTodos["localStorage('friday.todos.v4')"]
 ```
 
 ### 3.1 상태 호이스팅 (State Hoisting) 원칙
 - **전역 화면 상태 (`App.tsx`)**: 네비게이션 현재 탭, 전역 검색창 열림 여부, 워크스페이스 설정 다이얼로그, 시뮬레이션 빌드 대기열 상태, 로컬 숨김 처리된 태스크 ID 목록(`hiddenTaskIds`), 다크/라이트 테마(`theme`)를 소유합니다.
 - **도메인 격리 상태**:
   - `Tasks.tsx`: 검색어 필터, 정렬 기준, 상세 패널 선택 이슈 ID 등은 태스크 화면 내부에서 관리됩니다.
-  - `Todos.tsx`: 일일 할 일 목록 및 과거 히스토리 뷰 모드(`all` | `tasks-only` | `history-only`), 타임라인 접기/펼치기 상태는 독립적으로 관리됩니다.
+  - `useTodos.ts`: App에서 한 번 호출하여 홈과 To-Do가 같은 목록과 편집 명령을 사용합니다. 화면 이동으로 저장 타이머가 해제되지 않습니다.
+  - `TodoEditor.tsx`: 입력 초안, 선택 항목, 커서 복구와 드래그 상태를 관리합니다. 부모/자식 행은 동일한 재귀 렌더링을 사용합니다.
+  - `TodoHistory.tsx`: 검색어, 선택 월, 카드 모션을 관리합니다. 일별 로그는 한 번 계산하여 월별 그룹과 검색에서 공유합니다.
 
 ### 3.2 로컬 영속성 및 Fallback 안전성
-- 브라우저 보안 정책이나 WebView2 격리 환경으로 인해 `localStorage` 접근이 차단(`QuotaExceededError`, `SecurityError`)될 경우 앱이 충돌하지 않도록 모든 영속화 로직은 `try/catch`로 래핑되어 있으며, 실패 시 인메모리 세션 폴백을 제공합니다.
+- 텍스트 편집은 350ms 지연 저장합니다. 계층 변경/추가/완료/삭제는 대기 중인 저장을 취소하고 최신 목록을 즉시 저장합니다. `beforeunload`와 훅 해제 시 미저장 값을 flush합니다.
+- 대량 히스토리 미리보기(`?todoHistory=large`)에서는 저장하지 않습니다.
+- 저장 실패는 세션 상태를 유지하고 알림으로 표시합니다. 테마/숨김 목록의 읽기 실패도 알림을 표시합니다. 할 일 초기 로딩은 기존 계약에 따라 읽기 실패 또는 배열이 아닌 데이터에 샘플을 사용합니다. 이 리팩터링에서 데이터 검증/복구 정책은 변경하지 않았습니다.
+
+### 3.3 모듈 경계
+
+- `todoModel`은 React, 스토리지, 샘플 데이터에 의존하지 않습니다. 자식 인덱스는 도메인 연산과 두 화면이 공유합니다.
+- `todoHistoryModel`은 순수한 일별 기록을 입력받아 월별 그룹을 생성합니다. 화면에서 중복 집계하지 않습니다.
+- `demoTodos`와 `todoStorage`는 도메인 계층 위에 있으며 순환 참조나 재수출용 호환 모듈을 두지 않습니다.
+- `data/search.ts`는 공백 제거와 대소문자 무시 매칭만 담당합니다. 검색 필드, 필터, 정렬, 결과 제한은 각 호출자가 유지합니다. 히스토리 검색은 기존의 별도 결과 변환 규칙을 유지합니다.
+- 테마 색상은 CSS 토큰이 소유하며, 사용되지 않던 별도의 TypeScript 토큰 복제본은 제거했습니다.
 
 ---
 
@@ -130,5 +153,5 @@ flowchart TD
 ## 5. 네이티브 바운더리 및 연동 확장성
 
 - 현재 UI 프로토타입 단계에서는 `src-tauri/src/main.rs`가 창 관리(생명주기, 크기, 타이틀바)만을 수행합니다.
-- 사내 환경에 연동할 때는 프런트엔드 코드를 대규모로 뜯어고칠 필요 없이, `src/data/demo.ts` 및 각 피처의 API 공급 계층(`filter.ts`, `todoModel.ts`)을 Rust의 `invoke()` Tauri IPC 명령으로 치환하도록 설계되었습니다.
-- 상세한 사내 연동 단계와 주의사항은 [회사 환경 연동 가이드](file:///C:/dev/PersonalDashboard/docs/company-handoff.md)를 참고하십시오.
+- 실제 연동 시 데이터 로딩/저장 경계에서 Tauri IPC를 연결합니다. `filter.ts`, `todoModel.ts`, `todoHistoryModel.ts`는 API 공급자가 아닌 순수 도메인 연산이므로 네이티브 호출을 직접 넣지 않습니다.
+- 상세한 사내 연동 단계와 주의사항은 [회사 환경 연동 가이드](company-handoff.md)를 참고하십시오.
