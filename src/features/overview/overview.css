@@ -1,0 +1,1046 @@
+/* ==========================================================================
+   Friday Modern Overview - Bento Grid & Celestial Horizon Panorama System
+   ========================================================================== */
+
+.overview-dashboard {
+  --overview-gap: 20px;
+  --overview-panel-height: clamp(460px, calc(100dvh - 340px), 700px);
+  --overview-focus-fill: #f3f0e9;
+  --overview-focus-ink: #79623b;
+  --hero-bg: radial-gradient(circle at 82% 50%, rgba(204, 160, 75, 0.14) 0%, rgba(139, 92, 246, 0.08) 40%, transparent 70%), linear-gradient(135deg, #1e1e1c 0%, #141412 100%);
+  --hero-border: rgba(255, 255, 255, 0.08);
+  --hero-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --hero-pill-bg: rgba(204, 160, 75, 0.12);
+  --hero-pill-ink: #d5b57d;
+  --hero-chip-bg: #262624;
+  --hero-chip-border: rgba(255, 255, 255, 0.08);
+  --hero-chip-text: #eeede9;
+  --hero-chip-muted: #a5a49e;
+  --hero-fade-color: #141412;
+}
+
+html[data-theme='dark'] .overview-dashboard {
+  --overview-focus-fill: #292720;
+  --overview-focus-ink: #cfb783;
+  --hero-bg: radial-gradient(circle at 82% 50%, rgba(204, 160, 75, 0.14) 0%, rgba(139, 92, 246, 0.06) 40%, transparent 70%), linear-gradient(135deg, #1c1c1a 0%, #131311 100%);
+  --hero-border: rgba(255, 255, 255, 0.08);
+  --hero-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --hero-pill-bg: rgba(204, 160, 75, 0.12);
+  --hero-pill-ink: #d5b57d;
+  --hero-chip-bg: #262624;
+  --hero-chip-border: rgba(255, 255, 255, 0.08);
+  --hero-chip-text: #eeede9;
+  --hero-chip-muted: #a5a49e;
+  --hero-fade-color: #131311;
+}
+
+/* ==========================================================================
+   1. Full-Width Panorama Hero Banner: Apple Liquid Glass HUD & Horizon Sky
+   ========================================================================== */
+.overview-hero {
+  position: relative;
+  display: block;
+  min-height: 204px;
+  padding: 0;
+  margin-bottom: var(--overview-gap);
+  border-radius: 24px;
+  isolation: isolate;
+  overflow: hidden;
+  transition: background var(--motion-fast), border-color var(--motion-fast), box-shadow var(--motion-fast);
+
+  /* Daylight Soft Glass Card Base with 3D Convex Cushion */
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(244, 247, 252, 0.9));
+  border: 1px solid rgba(175, 192, 218, 0.7);
+  box-shadow: 
+    0 1px 3px 0 rgba(18, 28, 48, 0.05),
+    0 10px 24px -4px rgba(18, 28, 48, 0.11),
+    0 24px 48px -12px rgba(18, 28, 48, 0.13),
+    inset 0 2.5px 1.5px 0 rgba(255, 255, 255, 1),
+    inset 0 12px 24px -6px rgba(255, 255, 255, 0.85),
+    inset 0 -5px 14px -2px rgba(18, 32, 60, 0.09),
+    inset 1.5px 0 3px 0 rgba(255, 255, 255, 0.7),
+    inset -1.5px 0 3px 0 rgba(18, 32, 60, 0.04);
+  color: #1a1e28;
+
+  /* Theme-Aware Fairy-Tale Sky Colors (Daylight Fallbacks) */
+  --sky-dawn-1: #242232; --sky-dawn-2: #382c44; --sky-dawn-3: #584154; --sky-dawn-4: #7a5464;
+  --mtn-dawn-far: #4e3f5c; --mtn-dawn-mid: #3b2f48; --mtn-dawn-fore: #281f32;
+
+  --sky-morn-1: #dbebf8; --sky-morn-2: #e3edf8; --sky-morn-3: #faebd9; --sky-morn-4: #f4d4bd;
+  --mtn-morn-far: #9bb2cb; --mtn-morn-mid: #7892af; --mtn-morn-fore: #54718f;
+
+  --sky-noon-1: #dfedf7; --sky-noon-2: #e8f1f8; --sky-noon-3: #eff4f8; --sky-noon-4: #e7dac9;
+  --mtn-noon-far: #96afc5; --mtn-noon-mid: #728da6; --mtn-noon-fore: #516d86;
+
+  --sky-sunset-top: #c7b0d8; --sky-sunset-rose: #dfbcc7; --sky-sunset-peach: #f5cfbe; --sky-sunset-horizon: #fed6b5;
+  --mtn-sunset-mid: #8a6c84; --mtn-sunset-fore: #5c4156;
+
+  --sky-night-1: #1a2030; --sky-night-2: #232c3f; --sky-night-3: #2d374e; --sky-night-4: #394562;
+  --mtn-night-far: #465373; --mtn-night-mid: #313c54; --mtn-night-fore: #202839;
+}
+
+/* Midnight Soft Glass Card Base with 3D Convex Depth */
+html[data-theme='dark'] .overview-hero {
+  background: linear-gradient(135deg, rgba(27, 28, 30, 0.97), rgba(22, 23, 25, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 
+    0 2px 4px 0 rgba(0, 0, 0, 0.4),
+    0 12px 28px -4px rgba(0, 0, 0, 0.6),
+    0 28px 56px -12px rgba(0, 0, 0, 0.7),
+    inset 0 2px 1.5px 0 rgba(255, 255, 255, 0.25),
+    inset 0 10px 20px -6px rgba(255, 255, 255, 0.12),
+    inset 0 -5px 14px -2px rgba(0, 0, 0, 0.65),
+    inset 1px 0 2px 0 rgba(255, 255, 255, 0.15),
+    inset -1px 0 2px 0 rgba(0, 0, 0, 0.4);
+  color: #f1f4f8;
+
+  --sky-dawn-1: #161824; --sky-dawn-2: #201e30; --sky-dawn-3: #36293e; --sky-dawn-4: #4a3646;
+  --mtn-dawn-far: #34283f; --mtn-dawn-mid: #251c2e; --mtn-dawn-fore: #17101e;
+
+  --sky-morn-1: #141c2b; --sky-morn-2: #1c2738; --sky-morn-3: #2c3644; --sky-morn-4: #483e33;
+  --mtn-morn-far: #2f3b4c; --mtn-morn-mid: #212c3b; --mtn-morn-fore: #151d28;
+
+  --sky-noon-1: #131d2a; --sky-noon-2: #1a2636; --sky-noon-3: #243548; --sky-noon-4: #383c42;
+  --mtn-noon-far: #293749; --mtn-noon-mid: #1d2836; --mtn-noon-fore: #121b26;
+
+  --sky-sunset-top: #473357; --sky-sunset-rose: #6e415b; --sky-sunset-peach: #9b5454; --sky-sunset-horizon: #d88157;
+  --mtn-sunset-mid: #4a2d42; --mtn-sunset-fore: #2e1a2c;
+
+  --sky-night-1: #0f1422; --sky-night-2: #151c2e; --sky-night-3: #1b243b; --sky-night-4: #222c47;
+  --mtn-night-far: #2a3a54; --mtn-night-mid: #202c40; --mtn-night-fore: #161f2e;
+}
+
+/* ==========================================================================
+   5 PERIOD DIURNAL THEMES (오전, 오후, 저녁, 밤, 새벽 - Natural Daylight & Balanced Dark Mode)
+   ========================================================================== */
+
+/* ---------------- 1. 오전 (Morning: 06:00 ~ 12:00) ---------------- */
+/* Daylight */
+.overview-hero.period-morning {
+  background: linear-gradient(112deg, #edf5fa 0%, #e2eef7 45%, #f6f0e4 74%, #faead3 100%);
+  --sky-morn-1: #c6e0f2;
+  --sky-morn-2: #daecf8;
+  --sky-morn-3: #f5eedf;
+  --sky-morn-4: #f7dfc8;
+  --mtn-morn-mid: #789bb3;
+  --mtn-morn-fore: #54748c;
+}
+.overview-hero.period-morning .hero-sky-ambient { opacity: 0.92; filter: saturate(1.05); }
+
+/* Midnight Dark (Clear Fresh Morning Sky) */
+html[data-theme='dark'] .overview-hero.period-morning {
+  background: linear-gradient(110deg, #202b33 0%, #2f3e46 45%, #4b5c61 74%, #7a7258 100%);
+  --sky-morn-1: #476069;
+  --sky-morn-2: #607e86;
+  --sky-morn-3: #829da2;
+  --sky-morn-4: #bab196;
+  --mtn-morn-mid: #435e58;
+  --mtn-morn-fore: #2b3d39;
+}
+html[data-theme='dark'] .overview-hero.period-morning .hero-sky-ambient { opacity: 0.90; filter: saturate(1.05) brightness(1.0); }
+
+
+/* ---------------- 2. 오후 (Afternoon: 12:00 ~ 16:00) ---------------- */
+/* Daylight */
+.overview-hero.period-afternoon {
+  background: linear-gradient(112deg, #e9f2fc 0%, #dceaf7 45%, #eff5eb 74%, #faeed5 100%);
+  --sky-noon-1: #b6daf3;
+  --sky-noon-2: #cae4f7;
+  --sky-noon-3: #e2f0fb;
+  --sky-noon-4: #fbeece;
+  --mtn-noon-mid: #6d90a4;
+  --mtn-noon-fore: #476a7e;
+}
+.overview-hero.period-afternoon .hero-sky-ambient { opacity: 0.92; filter: saturate(1.1); }
+
+/* Midnight Dark (Unmistakably Daytime: Radiant Cerulean Afternoon Sky & Golden Sun Aura) */
+html[data-theme='dark'] .overview-hero.period-afternoon {
+  background: linear-gradient(110deg, #1e3040 0%, #2d455d 42%, #436384 74%, #737461 100%);
+  --sky-noon-1: #426485;
+  --sky-noon-2: #5882a8;
+  --sky-noon-3: #7da8d2;
+  --sky-noon-4: #d6cfab;
+  --mtn-noon-mid: #49695d;
+  --mtn-noon-fore: #2f453d;
+}
+html[data-theme='dark'] .overview-hero.period-afternoon .hero-sky-ambient { opacity: 0.94; filter: saturate(1.08) brightness(1.03); }
+
+
+/* ---------------- 3. 저녁 (Sunset / Evening: 16:00 ~ 19:00) ---------------- */
+/* Daylight */
+.overview-hero.period-sunset {
+  background: linear-gradient(112deg, #f5eff8 0%, #fae8eb 45%, #fce1d4 75%, #fae2cc 100%);
+  --sky-sunset-top: #c7b0d8;
+  --sky-sunset-rose: #dfbcc7;
+  --sky-sunset-peach: #f5cfbe;
+  --sky-sunset-horizon: #fed6b5;
+  --mtn-sunset-mid: #8a6c84;
+  --mtn-sunset-fore: #5c4156;
+}
+.overview-hero.period-sunset .hero-sky-ambient { opacity: 0.94; filter: saturate(1.15); }
+
+/* Midnight Dark (Twilight Amber & Violet Glow) */
+html[data-theme='dark'] .overview-hero.period-sunset {
+  background: linear-gradient(110deg, #231b30 0%, #35233a 42%, #542f41 72%, #7c4434 100%);
+  --sky-sunset-top: #3c2a4a;
+  --sky-sunset-rose: #59354a;
+  --sky-sunset-peach: #7e4848;
+  --sky-sunset-horizon: #b56e4e;
+  --mtn-sunset-mid: #3f2739;
+  --mtn-sunset-fore: #281725;
+}
+html[data-theme='dark'] .overview-hero.period-sunset .hero-sky-ambient { opacity: 0.92; filter: saturate(1.1) brightness(1.0); }
+
+
+/* ---------------- 4. 밤 (Night: 19:00 ~ 04:00) ---------------- */
+/* Daylight (Soft Moonlit Indigo: naturally blends into bright dashboard while keeping serene night mood) */
+.overview-hero.period-night {
+  background: linear-gradient(112deg, #9bb0d4 0%, #8ba2c9 40%, #7a93bd 72%, #6882ab 100%);
+  color: #ffffff;
+  --sky-night-1: #8ba2c9;
+  --sky-night-2: #7a93bd;
+  --sky-night-3: #6882ab;
+  --sky-night-4: #587199;
+  --mtn-night-mid: #4c6287;
+  --mtn-night-fore: #374966;
+}
+.overview-hero.period-night .hero-sky-ambient { opacity: 0.94; filter: saturate(1.1); }
+.period-night .hero-date { color: #e8effb; font-weight: 500; }
+.period-night .hero-title { color: #ffffff; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); }
+
+/* Midnight Dark (Deep Peaceful Midnight Sky) */
+html[data-theme='dark'] .overview-hero.period-night {
+  background: linear-gradient(110deg, #0e121a 0%, #131926 45%, #1a2233 76%, #232c42 100%);
+  color: #f1f4f8;
+  --sky-night-1: #0f1422;
+  --sky-night-2: #151c2e;
+  --sky-night-3: #1c263c;
+  --sky-night-4: #24314c;
+  --mtn-night-far: #232c42;
+  --mtn-night-mid: #182030;
+  --mtn-night-fore: #101522;
+}
+html[data-theme='dark'] .overview-hero.period-night .hero-sky-ambient { opacity: 0.88; filter: saturate(0.95); }
+html[data-theme='dark'] .period-night .hero-date { color: #adb5c5; }
+html[data-theme='dark'] .period-night .hero-title { color: #ffffff; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6); }
+
+
+/* ---------------- 5. 새벽 (Dawn: 04:00 ~ 06:00) ---------------- */
+/* Daylight */
+.overview-hero.period-dawn {
+  background: linear-gradient(112deg, #ebe8f4 0%, #e5def0 45%, #ecdeea 75%, #f4e2e2 100%);
+  --sky-dawn-1: #bbb2d4;
+  --sky-dawn-2: #cfc2df;
+  --sky-dawn-3: #dfc8da;
+  --sky-dawn-4: #eccfd4;
+  --mtn-dawn-mid: #786985;
+  --mtn-dawn-fore: #544560;
+}
+.overview-hero.period-dawn .hero-sky-ambient { opacity: 0.94; filter: saturate(1.15); }
+
+/* Midnight Dark (Cool Indigo & Rose Horizon) */
+html[data-theme='dark'] .overview-hero.period-dawn {
+  background: linear-gradient(110deg, #171826 0%, #201e34 45%, #30263e 75%, #483240 100%);
+  --sky-dawn-1: #242136;
+  --sky-dawn-2: #342a44;
+  --sky-dawn-3: #4a364a;
+  --sky-dawn-4: #694152;
+  --mtn-dawn-mid: #2e2134;
+  --mtn-dawn-fore: #1d1323;
+}
+html[data-theme='dark'] .overview-hero.period-dawn .hero-sky-ambient { opacity: 0.88; filter: saturate(0.98); }
+
+/* Ambient Mountain & Sky Canvas */
+.hero-sky-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+  z-index: 0;
+  mask-image: linear-gradient(to right, transparent 0%, transparent 10%, rgba(0, 0, 0, 0.3) 22%, rgba(0, 0, 0, 0.8) 40%, black 60%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 10%, rgba(0, 0, 0, 0.3) 22%, rgba(0, 0, 0, 0.8) 40%, black 60%);
+  opacity: 0.84;
+  filter: saturate(.75);
+}
+
+.fairy-sky-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Hero Content Area: Title exactly centered, Date on top, Liquid Glass HUD on Bottom-Right */
+.hero-content {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hero-title-area {
+  position: absolute;
+  left: 38px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: -11px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.hero-date {
+  color: #637085;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  line-height: 1.2;
+  margin: 0;
+}
+html[data-theme='dark'] .hero-date {
+  color: #adb5c5;
+}
+
+.hero-title {
+  font-family: 'Gowun Dodum', 'Hahmlet', 'SUIT Variable', sans-serif;
+  font-size: clamp(28px, 2.7vw, 36px);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.025em;
+  margin: 0;
+  color: #1a1e28;
+}
+html[data-theme='dark'] .hero-title {
+  color: #ffffff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+}
+
+/* Keep the greeting name aligned with the brand accent at every time of day. */
+.hero-highlight {
+  font-family: 'Outfit', 'Gowun Dodum', sans-serif;
+  font-weight: 750;
+  color: var(--brand-f-accent);
+  text-shadow: none;
+}
+
+/* --------------------------------------------------------------------------
+   Apple-Style Liquid Glass HUD Status Pills (Ultra-Translucent Pure Glass)
+   -------------------------------------------------------------------------- */
+.hero-hud-stats {
+  position: absolute;
+  right: 38px;
+  bottom: 22px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.hud-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 11px;
+
+  /* True Liquid Glass (Daylight: Crisp Frosted Crystal Glass) */
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.46) 100%);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 
+    0 4px 12px -2px rgba(18, 28, 48, 0.12),
+    0 1px 3px rgba(18, 28, 48, 0.06),
+    inset 0 1.5px 1px rgba(255, 255, 255, 1),
+    inset 0 -1px 2px rgba(18, 28, 48, 0.06);
+  color: #1a1e28;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s, box-shadow 0.2s, border-color 0.2s;
+  cursor: default;
+}
+
+/* True Liquid Glass (Midnight Dark: Pure Translucent Glass - Mountain Silhouettes Clearly Visible) */
+html[data-theme='dark'] .hud-pill {
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 
+    0 4px 14px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.35),
+    inset 0 -0.5px 0.5px rgba(0, 0, 0, 0.2);
+  color: #f0f4f8;
+}
+
+.hud-pill:hover {
+  transform: translateY(-1.5px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.6) 100%);
+  border-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 6px 18px rgba(18, 28, 48, 0.16), inset 0 1.5px 1px rgba(255, 255, 255, 1);
+}
+html[data-theme='dark'] .hud-pill:hover {
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0.8px rgba(255, 255, 255, 0.45);
+}
+
+.hud-icon {
+  font-size: 13px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+}
+
+.hud-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.hud-label {
+  font-size: 10px;
+  color: #1e293b;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-shadow: 0 0.5px 1px rgba(255, 255, 255, 0.85);
+}
+html[data-theme='dark'] .hud-label {
+  color: #cad3df;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.hud-val {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.hud-pill-amber .hud-val { color: #b45309; }
+html[data-theme='dark'] .hud-pill-amber .hud-val { color: #f5b773; }
+
+.hud-pill-blue .hud-val { color: #1d4ed8; }
+html[data-theme='dark'] .hud-pill-blue .hud-val { color: #8ec9f8; }
+
+.hud-pill-green .hud-val { color: #15803d; }
+html[data-theme='dark'] .hud-pill-green .hud-val { color: #8fd4a2; }
+
+/* ==========================================================================
+   2. Middle Row: To-Do (Left, ~60%) & Quick Ops (Right, ~40%: Builds 70% / Firmware 30%)
+   ========================================================================== */
+.overview-mid-row {
+  display: grid;
+  grid-template-columns: 1.25fr 0.85fr;
+  gap: var(--overview-gap);
+  align-items: stretch;
+  height: clamp(410px, 43vh, 460px);
+  min-height: 0;
+}
+
+.mid-col-todos {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.mid-col-todos .overview-todos {
+  flex: 1 1 0%;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.mid-col-ops {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 12px;
+  min-height: 0;
+  height: 100%;
+}
+
+.overview-dashboard .overview-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  padding: 18px 22px;
+  box-sizing: border-box;
+  min-height: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: transform var(--motion-fast), box-shadow var(--motion-fast), border-color var(--motion-fast);
+}
+
+/* Eliminate duplicate global heading paddings to achieve perfect top/bottom balance across all 4 panels */
+.overview-dashboard .panel-heading {
+  padding: 0 !important;
+  margin: 0 0 12px 0 !important;
+}
+
+html[data-theme='dark'] .overview-dashboard .overview-panel {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.overview-dashboard .overview-panel:hover {
+  border-color: rgba(204, 160, 75, 0.3);
+}
+
+/* To-Do Panel in Bento Grid (Matching Actual To-Do Tab) */
+.overview-dashboard .overview-todo-list {
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding: 0 6px 6px 0;
+  flex: 1 1 0%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.overview-dashboard .overview-todo-list::-webkit-scrollbar {
+  width: 5px;
+}
+.overview-dashboard .overview-todo-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overview-dashboard .overview-todo-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+.overview-dashboard .overview-todo-list::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.overview-dashboard .overview-todo-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+html .overview-dashboard .overview-todo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 13px;
+  border-radius: 12px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast), transform var(--motion-fast);
+}
+
+html .overview-dashboard .overview-todo-row:hover {
+  border-color: #cca04b;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.25);
+  transform: translateY(-1px);
+}
+
+html .overview-dashboard .overview-todo-row .todo-check-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+html .overview-dashboard .todo-checkbox-box {
+  flex-shrink: 0;
+}
+
+.overview-dashboard .todo-item-text {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+}
+
+.overview-dashboard .overview-subtodo-list {
+  position: relative;
+  margin: 4px 0 2px 24px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.overview-dashboard .todo-subitem-group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.overview-dashboard .todo-subitem-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+  transition: border-color var(--motion-fast);
+}
+
+.overview-dashboard .todo-subitem-row:hover {
+  border-color: #cca04b;
+}
+
+.overview-dashboard .todo-subitem-row .subitem-branch {
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  width: 12px;
+  height: 2px;
+  background: var(--border);
+}
+
+.overview-dashboard .todo-subitem-row .todo-check-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.overview-dashboard .todo-subitem-row .todo-item-text {
+  font-size: 12.5px;
+}
+
+/* Overview Composer Input (Matching To-Do Tab Composer) */
+.overview-dashboard .overview-todo-quick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--field, rgba(0, 0, 0, 0.15));
+  margin: 0 0 10px;
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast);
+}
+
+.overview-dashboard .overview-todo-quick:focus-within {
+  border-color: #cca04b;
+  box-shadow: 0 0 0 2px rgba(204, 160, 75, 0.2);
+}
+
+.overview-dashboard .overview-todo-quick .composer-plus-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1.8px dashed #7a708a;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.overview-dashboard .overview-todo-quick .todo-line-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+}
+
+.overview-dashboard .overview-todo-quick .key-hint {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+/* Recent Builds List */
+.recent-build-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  overflow-y: hidden;
+  min-height: 0;
+  flex: 1;
+}
+
+.overview-dashboard .recent-build-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  text-align: left;
+  transition: transform var(--motion-fast), border-color var(--motion-fast), background var(--motion-fast);
+}
+
+.overview-dashboard .recent-build-row:hover {
+  transform: translateX(2px);
+  border-color: #cca04b;
+}
+
+.overview-dashboard .recent-build-row:last-child {
+  margin-bottom: 0;
+}
+
+.overview-dashboard .recent-build-row .status-badge {
+  flex-shrink: 0;
+}
+
+.overview-dashboard .recent-build-row > svg {
+  flex-shrink: 0;
+}
+
+.recent-build-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.recent-build-name strong {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.recent-build-name small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+/* Firmware Section (Compact Search Only) */
+.quick-firmware {
+  padding: 16px 22px;
+  flex-shrink: 0;
+}
+
+.quick-firmware .panel-heading {
+  margin: 0 0 10px 0 !important;
+}
+
+.quick-firmware form {
+  margin: 0;
+}
+
+.quick-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--field);
+  transition: border-color var(--motion-fast);
+}
+
+.quick-search:focus-within {
+  border-color: #cca04b;
+}
+
+.quick-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 12.5px;
+  color: var(--text);
+  outline: none;
+}
+
+.quick-search button {
+  border: 0;
+  background: transparent;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+}
+
+.quick-search button:hover {
+  color: var(--text);
+}
+
+/* ==========================================================================
+   3. Bottom Row: Jira Tasks (100% Full-Width)
+   ========================================================================== */
+.overview-tasks.full-width-tasks {
+  margin-top: var(--overview-gap);
+  padding: 18px 24px 18px;
+}
+
+.overview-tasks.full-width-tasks .preview-toolbar {
+  margin-bottom: 12px;
+}
+
+.overview-tasks.full-width-tasks .preview-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+}
+
+.overview-tasks.full-width-tasks .preview-switch button {
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: 0;
+  background: transparent;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background var(--motion-fast), color var(--motion-fast);
+}
+
+.overview-tasks.full-width-tasks .preview-switch button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.overview-tasks.full-width-tasks .preview-switch button span {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--field);
+  color: var(--muted);
+}
+
+/* Jira Tasks Table Header & Rows in Full-Width */
+.overview-tasks.full-width-tasks .task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.overview-tasks.full-width-tasks .task-table-head {
+  display: grid;
+  grid-template-columns: 2.2fr 110px 90px 1.2fr;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 14px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--muted);
+  border-top: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.overview-tasks.full-width-tasks .task-table-head span:nth-child(1) {
+  text-align: left;
+}
+
+.overview-tasks.full-width-tasks .task-table-head span:nth-child(2) {
+  text-align: center;
+}
+
+.overview-tasks.full-width-tasks .task-table-head span:nth-child(3) {
+  text-align: center;
+}
+
+.overview-tasks.full-width-tasks .task-table-head span:nth-child(4) {
+  text-align: left;
+}
+
+.overview-tasks.full-width-tasks .task-row {
+  display: grid;
+  grid-template-columns: 2.2fr 110px 90px 1.2fr;
+  align-items: center;
+  gap: 16px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  transition: transform var(--motion-fast), border-color var(--motion-fast);
+}
+
+.overview-tasks.full-width-tasks .task-row:hover {
+  transform: translateX(2px);
+  border-color: #cca04b;
+}
+
+/* Jira Fixed Width Status & Priority Badges for Razor-Sharp Alignment */
+.overview-tasks.full-width-tasks .status-badge {
+  width: 96px;
+  justify-self: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.overview-tasks.full-width-tasks .priority-badge {
+  width: 72px;
+  justify-self: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.overview-tasks.full-width-tasks .task-row .task-project {
+  justify-self: start;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+@media (max-width: 1100px) {
+  .overview-mid-row {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .mid-col-todos {
+    height: 380px;
+  }
+  .mid-col-ops {
+    grid-template-rows: auto auto;
+    height: auto;
+  }
+}
+
+@media (max-width: 800px) {
+  .overview-hero {
+    min-height: auto;
+    padding: 24px 20px;
+    display: flex;
+  }
+  .hero-content {
+    position: relative;
+    inset: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    pointer-events: auto;
+  }
+  .hero-title-area {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    margin-top: 0;
+  }
+  .hero-hud-stats {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    align-self: flex-start;
+    flex-wrap: wrap;
+  }
+  .overview-tasks.full-width-tasks .task-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+/* ==========================================================================
+   LIGHT THEME: Refined Soft Warm Card Base + Crisp White Raised Rows
+   - Delicate Warmth Preserved (#fbfaf9): Cozy feel with yellow tint removed
+   - Prominent Floating Depth: Rich, visible 3D card shadow (0 10px 28px)
+   - Crisp Pure White Rows (#ffffff) for effortless glanceability and clear hierarchy
+   ========================================================================== */
+html:not([data-theme='dark']) .overview-dashboard .overview-panel,
+.overview-dashboard.card-theme-opt1 .overview-panel {
+  background: var(--warm-panel-surface) !important;
+  border-color: var(--warm-panel-border) !important;
+  box-shadow: 0 10px 28px -4px rgba(35, 28, 20, 0.09), 0 2px 6px -1px rgba(35, 28, 20, 0.04) !important;
+}
+
+html:not([data-theme='dark']) .overview-dashboard .overview-panel:hover,
+.overview-dashboard.card-theme-opt1 .overview-panel:hover {
+  border-color: rgba(204, 160, 75, 0.38) !important;
+  box-shadow: 0 14px 34px -4px rgba(35, 28, 20, 0.13), 0 4px 10px -1px rgba(35, 28, 20, 0.06) !important;
+}
+
+html:not([data-theme='dark']) .overview-dashboard .overview-todo-row,
+html:not([data-theme='dark']) .overview-dashboard .todo-subitem-row,
+html:not([data-theme='dark']) .overview-dashboard .recent-build-row,
+html:not([data-theme='dark']) .overview-dashboard .task-row,
+.overview-dashboard.card-theme-opt1 .overview-todo-row,
+.overview-dashboard.card-theme-opt1 .todo-subitem-row,
+.overview-dashboard.card-theme-opt1 .recent-build-row,
+.overview-dashboard.card-theme-opt1 .task-row {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 1px 3px rgba(35, 28, 20, 0.03), 0 1px 2px rgba(35, 28, 20, 0.02) !important;
+}
+
+html:not([data-theme='dark']) .overview-dashboard .overview-todo-row:hover,
+html:not([data-theme='dark']) .overview-dashboard .todo-subitem-row:hover,
+html:not([data-theme='dark']) .overview-dashboard .recent-build-row:hover,
+html:not([data-theme='dark']) .overview-dashboard .task-row:hover,
+.overview-dashboard.card-theme-opt1 .overview-todo-row:hover,
+.overview-dashboard.card-theme-opt1 .todo-subitem-row:hover,
+.overview-dashboard.card-theme-opt1 .recent-build-row:hover,
+.overview-dashboard.card-theme-opt1 .task-row:hover {
+  border-color: #cca04b !important;
+  box-shadow: 0 4px 14px -2px rgba(35, 28, 20, 0.08) !important;
+}
+
+html:not([data-theme='dark']) .overview-dashboard .quick-search,
+.overview-dashboard.card-theme-opt1 .quick-search {
+  background: #ffffff !important;
+  border-color: rgba(35, 25, 15, 0.09) !important;
+  box-shadow: inset 0 1px 2px rgba(35, 28, 20, 0.02) !important;
+}
+
+html:not([data-theme='dark']) .overview-dashboard .overview-todo-quick,
+.overview-dashboard.card-theme-opt1 .overview-todo-quick {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(35, 25, 15, 0.09) !important;
+}
+
+html:not([data-theme='dark']) .overview-dashboard .overview-tasks.full-width-tasks .preview-switch,
+.overview-dashboard.card-theme-opt1 .overview-tasks.full-width-tasks .preview-switch {
+  background: rgba(35, 25, 15, 0.04) !important;
+  border-color: rgba(35, 25, 15, 0.07) !important;
+}
