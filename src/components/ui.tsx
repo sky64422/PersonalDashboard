@@ -3,7 +3,7 @@ import { Check, Circle, CircleDashed, Clock3, Search, X, ArrowUp, Minus, ArrowDo
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import type { Priority } from '../data/model';
 
-export function Modal({ open, onClose, title, description, children, panel = false }: { open: boolean; onClose: () => void; title: string; description?: string; children: ReactNode; panel?: boolean }) {
+export function Modal({ open, onClose, title, description, children, panel = false, onForceClose }: { open: boolean; onClose: () => void; title: string; description?: string; children: ReactNode; panel?: boolean; onForceClose?: () => void }) {
   const returnFocus = useRef<HTMLElement | null>(null);
   const lastContent = useRef({ title, description, children });
   useLayoutEffect(() => { if (open) lastContent.current = { title, description, children }; }, [open, title, description, children]);
@@ -18,7 +18,7 @@ export function Modal({ open, onClose, title, description, children, panel = fal
         if (target?.isConnected && !target.closest('[role="dialog"][data-state="closed"]')) target.focus();
         else document.querySelector<HTMLElement>('nav [aria-current="page"]')?.focus();
       }}>
-      <div className="dialog-heading"><div><Dialog.Title>{content.title}</Dialog.Title>{content.description && <Dialog.Description>{content.description}</Dialog.Description>}</div><Dialog.Close className="icon-button" aria-label="닫기"><X size={19} /></Dialog.Close></div>
+      <div className="dialog-heading"><div><Dialog.Title>{content.title}</Dialog.Title>{content.description && <Dialog.Description>{content.description}</Dialog.Description>}</div><Dialog.Close className="icon-button" aria-label="닫기" onClick={event => { if (onForceClose) { event.preventDefault(); onForceClose(); } }}><X size={19} /></Dialog.Close></div>
       {content.children}
     </Dialog.Content></Dialog.Portal>
   </Dialog.Root>;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { Box, ChevronDown, FileBox, HelpCircle, LayoutGrid, ListTodo, PanelLeftClose, PanelLeftOpen, SlidersHorizontal, SquareCheck, X } from 'lucide-react';
+import { Box, CalendarDays, ChevronDown, FileBox, HelpCircle, LayoutGrid, ListTodo, PanelLeftClose, PanelLeftOpen, SlidersHorizontal, SquareCheck, X } from 'lucide-react';
 import { ALL, DEMO_USER_ID, NAV_ITEMS, type Build, type BuildRequest, type FirmwareArtifact, type Task, type TaskFilters, type ViewId } from './data/model';
 import { demoBuilds, demoFirmware, demoTasks } from './data/demo';
 import { filterTasks } from './features/tasks/filter';
@@ -13,13 +13,14 @@ import { loadInitialTodos } from './features/todos/todoStorage';
 import { BuildDetails, Builds } from './features/builds/Builds';
 import { Firmware, FirmwareDetails } from './features/firmware/Firmware';
 import { Overview } from './features/overview/Overview';
+import { Calendar } from './features/calendar/Calendar';
 import { GlobalSearch } from './components/GlobalSearch';
 import { Modal } from './components/ui';
 import { applyTheme, initialTheme, initialThemeError, THEMES, THEME_STORAGE_KEY, type Theme } from './theme';
 
 const APP_NAME = 'Friday';
 const LARGE_HISTORY_PREVIEW = new URLSearchParams(window.location.search).get('todoHistory') === 'large';
-const NAV_ICONS = { overview: LayoutGrid, tasks: SquareCheck, todos: ListTodo, builds: Box, firmware: FileBox };
+const NAV_ICONS = { overview: LayoutGrid, calendar: CalendarDays, tasks: SquareCheck, todos: ListTodo, builds: Box, firmware: FileBox };
 const DEFAULT_FILTERS: TaskFilters = { assigneeId: DEMO_USER_ID, query: '', status: ALL, sort: 'priority' };
 const DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 const WEEKDAY_FORMATTER = new Intl.DateTimeFormat('ko-KR', { weekday: 'long' });
@@ -106,6 +107,7 @@ export default function App() {
     <main className="main-content">
       <div className={`page-content ${view === 'tasks' ? 'tasks-page' : ''} ${view === 'todos' ? 'todos-page' : ''}`}><div className="page-heading"><div><h1>{nav.label}</h1></div></div>
       <div className="view-content" key={view}>
+        {view === 'calendar' && <Calendar />}
         {view === 'overview' && <Overview dateLabel={`${todayDate} ${todayWeekday}`} tasks={owned} todos={todos} todayKey={todayKey} onToggleTodo={todoActions.onToggle} onAddTodo={todoActions.onAdd} builds={builds} firmware={demoFirmware} navigate={setView} onTask={setTask} onBuild={setBuild} onFirmwareSearch={query => { setFirmwareQuery(query); setModel(ALL); setView('firmware'); }} />}
         {view === 'tasks' && <Tasks tasks={demoTasks} filters={filters} setFilters={setFilters} onSelect={setTask} hiddenTaskIds={hiddenTaskIds} onToggleHidden={toggleTaskHidden} reduceMotion={reduceMotion} />}
         {view === 'todos' && <Todos {...todoActions} todayKey={todayKey} />}

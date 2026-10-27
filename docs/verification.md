@@ -1,5 +1,17 @@
 # 검증 기록
 
+## 오프라인 Calendar — 2026-10-26
+
+- Overview 바로 다음에 Calendar를 추가했다. 월 직접 선택·이전/다음·오늘·키보드 탐색, 공휴일과 개인 일정, 종일/시간 일정 편집, 삭제 확인을 지원한다.
+- 공휴일 2018–2027년 JSON 스냅샷과 MIT 고지를 번들에 포함했다. 개인 일정은 `friday.calendar.v1`에 저장하며, 손상 데이터 읽기 실패는 편집을 잠그고 저장 실패는 초안을 유지한다.
+- 단위 테스트: `npm test` **44/44** 통과. 윤년·월말·잘못된 날짜/시간·공휴일 중복·알 수 없는 연도·데이터 손상·용량 초과·동시 변경을 포함한다.
+- UI: `npm run test:ui -- --workers=1` **42/42** 통과. Calendar 8개 시나리오는 CRUD/reload, 외부 데이터 요청 0, 외부 접속 차단 사용, 방향키와 PageDown, 저장 실패·초안 유지·충돌 복구·공유 잠금, 밀집 일정·겹친 공휴일, 양 테마의 1440/800px 레이아웃을 검사한다. 스크린샷은 `tmp/screenshots/calendar-*.png`.
+- 첫 전체 UI 실행은 기존 히스토리 드래그 테스트에서 `Execution context was destroyed`로 39/40 통과했다. 그 실행 중 문서 파일 변경이 있었으며 이를 제품 회귀로 단정하지 않았다. 코드/문서 수정이 멈춘 최종 실행은 해당 테스트를 포함하여 42개 모두 통과했다.
+- 리뷰에서 발견한 두 문제를 보완했다: (1) 읽기/비교/쓰기 사이의 동시 저장 경쟁을 Web Locks로 직렬화, (2) 충돌 후 초안을 버려야 하는 흐름을 '새 일정으로 저장'으로 복구. 각각 잠금 대기 및 충돌 복구 UI 테스트의 실패를 확인한 후 수정하여 통과했다.
+- 웹 개발 환경의 기존 외부 폰트 요청을 발견했다. Calendar의 fetch/XHR 요청과 구분하여 검증했고 외부 HTTPS 요청을 차단해도 일정 저장·복원이 동작한다. 앱 전체 외부 통신이 없다는 주장으로 확대하지 않는다. 관련 제한과 출처는 `calendar.md`에 기록했다.
+- `npm run build`, `cargo fmt --manifest-path src-tauri/Cargo.toml -- --check`, `npm run tauri -- build --no-bundle` 통과. 최종 Rust 릴리즈 컴파일 완료(1분 33초) 및 실행 파일 생성을 확인했다.
+- 별도 WebView2 프로필에서 `node scripts/native-smoke.mjs`, `node scripts/native-theme-smoke.mjs`, `node scripts/native-calendar-smoke.mjs` 통과. 1440×960, 양 테마 가로 넘침 0, 페이지 오류 0, 외부 데이터 요청 0. CRUD/reload, 공휴일, 키보드 이동을 검증하고 실제 캡처를 확인했다. 사용자 일정은 건드리지 않았다.
+
 ## 구조 리팩터링 — 2026-10-26
 
 - 범위: To-Do 편집/히스토리/홈 미리보기 분리, 상태·저장 훅 추출, 계층 인덱스와 재귀 행 통합, 샘플/스토리지/히스토리 모델 분리, 공통 검색, 천체 계산 분리, 사용하지 않는 테마 토큰·compact 분기·이미지 제거.
@@ -209,3 +221,21 @@ Gr8r Studio 데모를 실제 브라우저에서 검토한 뒤 Overview 업무 �
 - Passed: 33 unit tests, 30 UI tests (including aligned-row and solid-surface assertions), frontend build, Rust format check, and Tauri release build.
 - Inspected both themes at 1440/1280/900/800px, the tall 1280x1360 layout, and night Hero bevel. Production WebView2 smoke, theme persistence and detail navigation passed with zero page errors; native screenshot inspected.
 - Capture: `tmp/screenshots/overview-aligned-web-Midnight-1280.png`.
+
+## Calendar seasonal artwork - 2026-10-27
+
+- Refined the eight local SVG landscapes, then reduced repeated foliage and grass after visual feedback. Autumn reeds were replaced with a sunset lake, with a cool water palette, distant reflections, irregular horizontal ripples, and warm reflected light. Calendar layout and event interactions are unchanged.
+- Browser captures inspected in Daylight and Midnight for all eight scenes; 17 captures, zero page errors. Evidence: `tmp/screenshots/calendar-art/`.
+- `npm test`: 46 passed. Full UI run before final lake styling: 45 passed; Calendar UI suite: 11 passed after the lake replacement; landscape test passed again after lowering the water to the bottom 23% of the illustration.
+- Standard `npm run build` is blocked by the existing unused `getDDayLabel` function in `Calendar.tsx:43` (TS6133). No unrelated source was removed. `npx tsc --noEmit --noUnusedLocals false` and `npx vite build` pass. Native validation uses the resulting Vite output with a temporary `beforeBuildCommand` override, not a claim that the standard build passes.
+- Final artwork: asymmetric low shoreline and subdued slate water; latest 16 scene/theme captures plus full Calendar capture had no page errors. Final landscape UI test passed.
+- Final production executable built with the documented temporary frontend-command override. Isolated WebView2 verified Calendar CRUD/reload, keyboard navigation, holidays and both themes, with zero page errors or external data requests. Native screenshot inspected.
+- The existing native script initially rejected a negative overflow measurement (-15px, the vertical scrollbar). A temporary verification copy used `overflow <= 0` and passed; the product script was not altered. Debug build was blocked by the already-running debug executable; the user's running app was left intact and release output was used for the isolated check.
+
+## Calendar landscape selection and cloud refinement - 2026-10-27
+
+- Restored a restrained mountain silhouette below the sun and added soft sunset cloud bands. Lowered the lake to approximately the bottom 19% of the artwork; retained the muted slate palette and asymmetric shoreline.
+- Added previous/next background buttons with current scene name and position. The eight scenes wrap in both directions. The date, calendar navigation and agenda data do not change. Manual background selection remains while this Calendar view is open; it is not persisted to storage.
+- The selected landscape now determines its season and particle type; the date seed remains stable. Unit tests: 47 passed. Calendar UI tests: 12 passed, including eight-scene cycling, keyboard activation, wraparound, unchanged date and the 800px viewport. Both themes/all eight scenes captured with no page errors.
+- Standard build remains blocked by the pre-existing unused `getDDayLabel` (TS6133). Type-check with the unused-local check disabled and Vite build passed, as documented above.
+- Final release executable (temporary frontend override) passed isolated WebView2 Calendar CRUD/reload/holidays/keyboard/theme checks. Native picker also passed eight-scene cycling, wraparound, keyboard selection and unchanged selected date; zero page errors. Inspected `tmp/screenshots/native-calendar-picker.png`.

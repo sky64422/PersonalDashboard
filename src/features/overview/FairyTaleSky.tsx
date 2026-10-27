@@ -10,16 +10,24 @@ const QUIET_STARS = [
   { x: 920, y: 28, r: 1.4, op: 0.55 },
 ];
 
-export function FairyTaleSky({ state }: { state: CelestialState }) {
+export function FairyTaleSky({
+  state,
+  viewBox = '0 0 1000 200',
+  className = '',
+}: {
+  state: CelestialState;
+  viewBox?: string;
+  className?: string;
+}) {
   const { period, isSun, celestialX, celestialY } = state;
 
   const showStars = period === 'night' || period === 'dawn';
 
   return (
-    <div className={`hero-sky-ambient period-${period} hero-graphic-image`} aria-hidden="true">
+    <div className={`hero-sky-ambient period-${period} hero-graphic-image ${className}`} aria-hidden="true">
       <svg
         className="fairy-sky-canvas"
-        viewBox="0 0 1000 200"
+        viewBox={viewBox}
         preserveAspectRatio="xMidYMid slice"
         xmlns="http://www.w3.org/2000/svg"
       >

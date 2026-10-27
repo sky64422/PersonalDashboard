@@ -155,3 +155,9 @@ flowchart TD
 - 현재 UI 프로토타입 단계에서는 `src-tauri/src/main.rs`가 창 관리(생명주기, 크기, 타이틀바)만을 수행합니다.
 - 실제 연동 시 데이터 로딩/저장 경계에서 Tauri IPC를 연결합니다. `filter.ts`, `todoModel.ts`, `todoHistoryModel.ts`는 API 공급자가 아닌 순수 도메인 연산이므로 네이티브 호출을 직접 넣지 않습니다.
 - 상세한 사내 연동 단계와 주의사항은 [회사 환경 연동 가이드](company-handoff.md)를 참고하십시오.
+
+## 6. Calendar 모듈
+
+`features/calendar/Calendar.tsx`는 월간 격자와 선택일 목록, `EventEditor.tsx`는 기존 Radix Modal 기반 일정 편집을 담당한다. `calendarModel.ts`는 날짜/시간 검증과 공휴일 조회, `calendarStorage.ts`는 버전 검증·저장 실패·동시 변경 감지를 담당한다. 저장 시 Web Locks로 창 간 읽기/비교/쓰기를 직렬화한다. 충돌한 입력은 원본을 덮어쓰지 않고 새 일정으로 저장할 수 있다.
+
+날짜 공통 함수는 `data/date.ts`로 이동하고 기존 To-Do import는 re-export로 유지한다. 공휴일 JSON은 빌드에 포함되며 런타임 통신은 없다. 자세한 범위와 저장 정책은 [Calendar](calendar.md)를 따른다.

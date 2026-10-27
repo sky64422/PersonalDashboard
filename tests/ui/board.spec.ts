@@ -28,6 +28,7 @@ test('board assigns each owned task once and filters a column without losing the
 });
 
 test('todo tab moves completed items to bottom and switches monthly clothesline history', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-10-26T12:00:00') });
   await page.goto('/');
   await expect(page.locator('.brand-name .brand-f')).toHaveText('F');
   await expect(page.getByRole('region', { name: '남아있는 TODO' })).toBeVisible();

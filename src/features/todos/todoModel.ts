@@ -1,18 +1,6 @@
 import type { TodoItem } from '../../data/model';
-
-export function formatDateKey(date: Date = new Date()): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-export function offsetDateKey(baseDateKey: string, deltaDays: number): string {
-  const [y, m, d] = baseDateKey.split('-').map(Number);
-  const dt = new Date(y, m - 1, d);
-  dt.setDate(dt.getDate() + deltaDays);
-  return formatDateKey(dt);
-}
+import { offsetDateKey } from '../../data/date';
+export { formatDateKey, offsetDateKey } from '../../data/date';
 
 export function formatKoreanDateLabel(dateKey: string, todayKey: string): string {
   if (dateKey === todayKey) return `오늘 · ${formatShortDate(dateKey)}`;

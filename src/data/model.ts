@@ -1,4 +1,4 @@
-export type ViewId = 'overview' | 'tasks' | 'todos' | 'builds' | 'firmware';
+export type ViewId = 'overview' | 'calendar' | 'tasks' | 'todos' | 'builds' | 'firmware';
 export const TASK_STATUS = { todo: 'To Do', progress: 'In Progress', review: 'In Review', done: 'Done', closed: 'Closed' } as const;
 export type TaskStatus = typeof TASK_STATUS[keyof typeof TASK_STATUS];
 export type Priority = 'High' | 'Medium' | 'Low';
@@ -20,6 +20,7 @@ export const TASK_COLUMNS: { id: string; label: string; statuses: readonly TaskS
 export const PRIORITY_RANK: Record<Priority, number> = { High: 0, Medium: 1, Low: 2 };
 export const NAV_ITEMS: { id: ViewId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
+  { id: 'calendar', label: 'Calendar' },
   { id: 'tasks', label: 'Jira Tasks' },
   { id: 'todos', label: 'To-Do' },
   { id: 'builds', label: 'Builds' },

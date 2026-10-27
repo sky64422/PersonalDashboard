@@ -110,3 +110,8 @@ npm run build
 - [개발자 가이드 및 기여 방법](docs/contributing.md)
 - [사내 시스템 연동 핸드오프](docs/company-handoff.md)
 - [전체 검증 기록](docs/verification.md)
+- [Calendar 사용법·설계·데이터 관리](docs/calendar.md)
+
+## Calendar
+
+Overview 아래의 월간 달력에서 한국 공휴일과 개인 일정을 확인할 수 있습니다. 날짜 선택, 월 이동, 오늘 복귀, 종일/시간 일정 추가·수정·삭제를 지원합니다. 공휴일은 내장 데이터, 일정은 PC 로컬 저장이며 별도 API 키가 필요하지 않습니다.
