@@ -233,7 +233,7 @@ test('X close button dismisses immediately without confirmation even if dirty, a
   const agenda = page.locator('.calendar-agenda');
   await expect(agenda).toBeVisible();
   await expect(agenda).toContainText('26');
-  await expect(agenda.locator('.calendar-hero-add-btn')).toBeVisible();
+  await expect(agenda.locator('.calendar-empty-add-btn')).toBeVisible();
 
   // Take close-up screenshot of the agenda panel & hero card
   await page.locator('.calendar-agenda').screenshot({ path: 'tmp/screenshots/calendar-agenda-hero-panel.png' });

@@ -364,15 +364,6 @@ export function Calendar() {
                     <Sparkles size={11} />
                     <span>{selected === today ? 'TODAY' : `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`}</span>
                   </span>
-                  <button
-                    className="button primary calendar-hero-add-btn"
-                    aria-label="선택한 날짜에 새 일정 등록"
-                    disabled={!!snapshot.error}
-                    onClick={() => setEditing(newEvent(selected))}
-                  >
-                    <Plus size={13} strokeWidth={2.5} />
-                    <span>일정 등록</span>
-                  </button>
                 </div>
 
                 <div className="calendar-agenda-hero">
