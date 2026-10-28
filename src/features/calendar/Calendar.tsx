@@ -1,11 +1,21 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
-import { ArrowUpRight, BarChart3, Bookmark, CalendarDays, ChevronLeft, ChevronRight, Pin, Plus, Sparkles } from 'lucide-react';
+import {
+  ArrowUpRight,
+  BarChart3,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Sparkles,
+} from 'lucide-react';
 import { formatDateKey, offsetDateKey } from '../../data/date';
 import {
   CALENDAR_COPY as C,
   CALENDAR_MIN_DATE,
   CALENDAR_MAX_DATE,
   DAY_PREVIEW_LIMIT,
+  EVENT_COLORS,
+  UPCOMING_MONTHS,
   HOLIDAY_YEARS,
   WEEKDAYS,
   holidaysFor,
@@ -13,6 +23,7 @@ import {
   localDate,
   monthDays,
   moveMonth,
+  moveYear,
   newEvent,
   sortEvents,
   validDate,
@@ -42,6 +53,8 @@ const WEEKDAY_HEADERS = [
   { ko: '토', en: 'SAT', isSaturday: true },
 ];
 
+const MIN_YEAR = Number(CALENDAR_MIN_DATE.slice(0, 4));
+const MAX_YEAR = Number(CALENDAR_MAX_DATE.slice(0, 4));
 
 export function Calendar() {
   const today = formatDateKey();
@@ -49,13 +62,28 @@ export function Calendar() {
   const [snapshot, setSnapshot] = useState(() => readCalendar());
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const grid = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const pickerTrigger = useRef<HTMLButtonElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerYear, setPickerYear] = useState(() => localDate(today).getFullYear());
+  useEffect(() => {
+    if (!pickerOpen) return;
+    function dismiss(event: PointerEvent) {
+      if (!pickerRef.current?.contains(event.target as Node)) setPickerOpen(false);
+    }
+    function escape(event: globalThis.KeyboardEvent) {
+      if (event.key === 'Escape') { setPickerOpen(false); pickerTrigger.current?.focus(); }
+    }
+    document.addEventListener('pointerdown', dismiss);
+    document.addEventListener('keydown', escape);
+    return () => { document.removeEventListener('pointerdown', dismiss); document.removeEventListener('keydown', escape); };
+  }, [pickerOpen]);
   const focusDate = useRef<string | null>(null);
   const month = selected.slice(0, 7);
   const date = localDate(selected);
   const days = useMemo(() => monthDays(selected), [selected]);
   const [now, setNow] = useState(() => Date.now());
   const [selectedLandscape, setSelectedLandscape] = useState<LandscapeId>();
-
   // 30-minute interval round robin ticker
   useEffect(() => {
     const timer = setInterval(() => {
@@ -73,33 +101,6 @@ export function Calendar() {
     const index = (landscapeIndex + direction + LANDSCAPES.length) % LANDSCAPES.length;
     setSelectedLandscape(LANDSCAPES[index].id);
   }
-
-  // Monthly scratchpad memo state
-  const [memo, setMemo] = useState(() => {
-    try {
-      return localStorage.getItem(`friday.calendar.memo.${selected.slice(0, 7)}`) ?? '';
-    } catch {
-      return '';
-    }
-  });
-
-  useEffect(() => {
-    try {
-      setMemo(localStorage.getItem(`friday.calendar.memo.${month}`) ?? '');
-    } catch {
-      setMemo('');
-    }
-  }, [month]);
-
-  function saveMemo(nextText: string) {
-    setMemo(nextText);
-    try {
-      localStorage.setItem(`friday.calendar.memo.${month}`, nextText);
-    } catch {
-      // ignore
-    }
-  }
-
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
     for (const event of sortEvents(snapshot.events)) {
@@ -116,8 +117,8 @@ export function Calendar() {
   const timedCount = monthCount - allDayCount;
 
   const upcomingHighlights = useMemo(
-    () => getUpcomingHighlights(month, today, snapshot.events),
-    [month, today, snapshot.events],
+    () => getUpcomingHighlights(today, snapshot.events),
+    [today, snapshot.events],
   );
 
   const weeklyLoad = useMemo(
@@ -154,8 +155,11 @@ export function Calendar() {
       End: WEEK_LENGTH - 1 - weekday,
     };
     let next: string;
-    if (event.key === 'PageUp' || event.key === 'PageDown') next = moveMonth(key, event.key === 'PageUp' ? -1 : 1);
-    else if (Object.hasOwn(offsets, event.key)) next = offsetDateKey(key, offsets[event.key]);
+    if (event.key === 'PageUp' || event.key === 'PageDown') {
+      next = event.shiftKey
+        ? moveYear(key, event.key === 'PageUp' ? -1 : 1)
+        : moveMonth(key, event.key === 'PageUp' ? -1 : 1);
+    } else if (Object.hasOwn(offsets, event.key)) next = offsetDateKey(key, offsets[event.key]);
     else return;
     event.preventDefault();
     select(next, true);
@@ -184,57 +188,75 @@ export function Calendar() {
       {/* 1. Header Toolbar */}
       <header className="calendar-toolbar">
         <div className="calendar-month-title">
-          <span className="calendar-overline">
-            <span className="calendar-overline-dot" />
-            {date.getFullYear()}
-            <span className="calendar-overline-line" />
-            <span className="calendar-overline-tag">PLANNER</span>
-          </span>
-          <h2 aria-live="polite">
-            {date.getMonth() + 1}월
-            <span className="calendar-month-sub">{MONTH_NAME.format(date)}</span>
-          </h2>
+          <div className="calendar-year-row">
+            <span className="calendar-overline-dot" aria-hidden="true" />
+            <span className="calendar-year-display">{date.getFullYear()}</span>
+          </div>
+          <div className="calendar-picker-anchor" ref={pickerRef}>
+            <h2 aria-live="polite">
+              <button ref={pickerTrigger} type="button" className="calendar-picker-trigger"
+                aria-label={`${date.getFullYear()}년 ${date.getMonth() + 1}월, 연도와 월 선택`}
+                aria-expanded={pickerOpen} aria-haspopup="dialog"
+                onClick={() => { setPickerYear(date.getFullYear()); setPickerOpen(!pickerOpen); }}>
+                {date.getMonth() + 1}월 <span className="calendar-month-sub">{MONTH_NAME.format(date)}</span>
+                <ChevronDown size={17} aria-hidden="true" />
+              </button>
+            </h2>
+            {pickerOpen && <div className="calendar-picker" role="dialog" aria-label="연도와 월 선택">
+              <div className="calendar-picker-year">
+                <button type="button" aria-label="이전 연도" disabled={pickerYear <= MIN_YEAR} onClick={() => setPickerYear(pickerYear - 1)}><ChevronLeft size={16} /></button>
+                <select aria-label="연도 선택" value={pickerYear} onChange={e => setPickerYear(Number(e.target.value))}>
+                  {Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i).map(year => <option key={year} value={year}>{year}년</option>)}
+                </select>
+                <button type="button" aria-label="다음 연도" disabled={pickerYear >= MAX_YEAR} onClick={() => setPickerYear(pickerYear + 1)}><ChevronRight size={16} /></button>
+              </div>
+              <div className="calendar-picker-months">
+                {Array.from({ length: 12 }, (_, i) => {
+                  const target = new Date(pickerYear, i, Math.min(date.getDate(), new Date(pickerYear, i + 1, 0).getDate()));
+                  const key = formatDateKey(target);
+                  return <button type="button" key={i} disabled={!validDate(key)} aria-pressed={pickerYear === date.getFullYear() && i === date.getMonth()}
+                    onClick={() => { select(key); setPickerOpen(false); pickerTrigger.current?.focus(); }}>{i + 1}월</button>;
+                })}
+              </div>
+            </div>}
+          </div>
         </div>
         <div className="calendar-controls">
-          <label className="calendar-month-picker">
-            <input
-              aria-label={C.month}
-              type="month"
-              min={CALENDAR_MIN_DATE.slice(0, 7)}
-              max={CALENDAR_MAX_DATE.slice(0, 7)}
-              value={month}
-              onChange={e => select(`${e.target.value}-01`)}
-            />
-          </label>
+          <input
+            aria-label={C.month}
+            type="month"
+            min={CALENDAR_MIN_DATE.slice(0, 7)}
+            max={CALENDAR_MAX_DATE.slice(0, 7)}
+            value={month}
+            onChange={e => select(`${e.target.value}-01`)}
+            className="calendar-month-hidden-input"
+          />
+
           <div className="calendar-stepper">
             <button
+              type="button"
               className="icon-button"
               aria-label={C.previous}
+              title="이전 달"
               disabled={!validDate(moveMonth(selected, -1))}
               onClick={() => select(moveMonth(selected, -1))}
             >
-              <ChevronLeft size={17} />
+              <ChevronLeft size={16} />
             </button>
-            <button className="calendar-today" onClick={() => select(formatDateKey())}>
+            <button type="button" className="calendar-today" title="오늘로 이동" onClick={() => select(formatDateKey())}>
               {C.today}
             </button>
             <button
+              type="button"
               className="icon-button"
               aria-label={C.next}
+              title="다음 달"
               disabled={!validDate(moveMonth(selected, 1))}
               onClick={() => select(moveMonth(selected, 1))}
             >
-              <ChevronRight size={17} />
+              <ChevronRight size={16} />
             </button>
           </div>
-          <button
-            className="button primary calendar-add-btn"
-            disabled={!!snapshot.error}
-            onClick={() => setEditing(newEvent(selected))}
-          >
-            <Plus size={15} />
-            {C.add}
-          </button>
         </div>
       </header>
 
@@ -275,8 +297,8 @@ export function Calendar() {
                 {days.slice(week * WEEK_LENGTH, (week + 1) * WEEK_LENGTH).map(key => {
                   const items = eventsByDate.get(key) ?? [];
                   const names = holidaysFor(key);
-                  const previewLimit = names.length ? DAY_PREVIEW_LIMIT - 1 : DAY_PREVIEW_LIMIT;
                   const active = key === selected;
+                  const previewLimit = active && names.length ? 0 : active && days.length > 5 * WEEK_LENGTH ? 1 : names.length ? DAY_PREVIEW_LIMIT - 1 : DAY_PREVIEW_LIMIT;
                   const dayOfWeek = localDate(key).getDay();
                   const isSunday = names.length > 0 || dayOfWeek === 0;
                   const isSaturday = dayOfWeek === 6;
@@ -308,25 +330,24 @@ export function Calendar() {
                             {names.join(' · ')}
                           </span>
                         )}
-                        <span className="calendar-previews">
-                          {items.slice(0, previewLimit).map(item => (
-                            <span className="calendar-preview" key={item.id}>
-                              <i />
-                              {!item.allDay && <time>{item.start}</time>}
-                              <span>{item.title}</span>
-                            </span>
-                          ))}
-                          {items.length > previewLimit && (
-                            <span className="calendar-more">+{items.length - previewLimit}개</span>
-                          )}
-                        </span>
                       </button>
+                      <div className="calendar-previews">
+                        {items.slice(0, previewLimit).map(item => (
+                          <button type="button" className="calendar-preview" key={item.id}
+                            data-color={item.color ?? 'default'} aria-label={`달력에서 ${item.title} 수정`}
+                            style={{ '--event-color': EVENT_COLORS.find(color => color.id === (item.color ?? 'default'))?.value } as CSSProperties}
+                            disabled={!!snapshot.error} onClick={() => { select(key); setEditing(item); }}>
+                            {!item.allDay && <time>{item.start}</time>}
+                            <span>{item.title}</span>
+                          </button>
+                        ))}
+                        {items.length > previewLimit && <span className="calendar-more">+{items.length - previewLimit}개</span>}
+                      </div>
                       {active && (
                         <button
                           type="button"
                           className="calendar-cell-quick-add"
-                          aria-label={`${key}에 일정 추가`}
-                          title="이 날짜에 일정 추가"
+                          title={`${key}에 일정 추가`}
                           disabled={!validDate(key) || !!snapshot.error}
                           onClick={e => {
                             e.stopPropagation();
@@ -384,13 +405,6 @@ export function Calendar() {
               </div>
             ))}
 
-            {agenda.length > 0 && (
-              <h3 className="calendar-agenda-heading">
-                {C.agendaTitle}
-                <span>{agenda.length}</span>
-              </h3>
-            )}
-
             <div className="calendar-agenda-body">
               {agenda.length ? (
                 <div className="calendar-agenda-list">
@@ -414,14 +428,7 @@ export function Calendar() {
               ) : (
                 !snapshot.error && (
                   <div className="calendar-empty">
-                    <div className="calendar-empty-icon" aria-hidden="true">
-                      <CalendarDays size={24} strokeWidth={1.5} />
-                    </div>
                     <strong>{C.empty}</strong>
-                    <p>{C.emptyHint}</p>
-                    <button className="text-button calendar-empty-add-btn" onClick={() => setEditing(newEvent(selected))}>
-                      <Plus size={14} />이 날짜에 추가
-                    </button>
                   </div>
                 )
               )}
@@ -446,22 +453,24 @@ export function Calendar() {
 
       {/* 3. Lower Tier: Monthly Intelligence & Desk Widgets */}
       <section className="calendar-bottom-dashboard" aria-label="월간 요약 대시보드">
-        {/* Widget 1: Upcoming Highlights & D-Day */}
-        <article className="calendar-widget-card">
+        {(['event', 'holiday'] as const).map(type => {
+          const items = upcomingHighlights.filter(item => item.type === type);
+          return <article className="calendar-widget-card" key={type}>
           <div className="calendar-widget-header">
             <div className="calendar-widget-title-group">
               <span className="calendar-widget-icon-pill">
                 <Sparkles size={14} />
               </span>
-              <h3>주요 일정 & 공휴일 D-Day</h3>
+              <h3>{type === 'event' ? '다가오는 일정들' : '다가오는 공휴일들'}</h3>
             </div>
-            <span className="calendar-widget-count-badge">{upcomingHighlights.length}개</span>
+            <span className="calendar-widget-count-badge">{items.length}개</span>
           </div>
           <div className="calendar-widget-body">
-            {upcomingHighlights.length > 0 ? (
+            <p className="calendar-dday-range">오늘부터 {UPCOMING_MONTHS}개월 후까지</p>
+            {items.length > 0 ? (
               <ul className="calendar-dday-list">
-                {upcomingHighlights.slice(0, 5).map(item => (
-                  <li key={item.id} className="calendar-dday-item" onClick={() => select(item.date, true)} role="button" tabIndex={0}>
+                {items.map(item => (
+                  <li key={item.id} className="calendar-dday-item" onClick={() => select(item.date, true)} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(item.date, true); } }}>
                     <span className={`calendar-dday-badge ${item.type === 'holiday' ? 'holiday' : 'event'}`}>
                       {item.dDay}
                     </span>
@@ -475,11 +484,12 @@ export function Calendar() {
               </ul>
             ) : (
               <div className="calendar-widget-empty">
-                <p>이번 달 예정된 주요 일정이 없습니다.</p>
+                <p>{type === 'event' ? '예정된 일정이 없습니다.' : '예정된 공휴일이 없습니다.'}</p>
               </div>
             )}
           </div>
-        </article>
+        </article>;
+        })}
 
         {/* Widget 2: Weekly Load & Rhythm */}
         <article className="calendar-widget-card">
@@ -488,7 +498,7 @@ export function Calendar() {
               <span className="calendar-widget-icon-pill">
                 <BarChart3 size={14} />
               </span>
-              <h3>월간 일정 리듬 & 주간 밀도</h3>
+              <h3>월간 일정 리듬</h3>
             </div>
             <span className="calendar-widget-count-badge">총 {monthCount}개</span>
           </div>
@@ -524,29 +534,6 @@ export function Calendar() {
           </div>
         </article>
 
-        {/* Widget 3: Monthly Focus & Scratchpad */}
-        <article className="calendar-widget-card calendar-memo-widget">
-          <div className="calendar-widget-header">
-            <div className="calendar-widget-title-group">
-              <span className="calendar-widget-icon-pill">
-                <Pin size={14} />
-              </span>
-              <h3>{date.getMonth() + 1}월의 포커스 & 메모</h3>
-            </div>
-            <span className="calendar-widget-tag-pill">
-              <Bookmark size={11} /> 자동 저장
-            </span>
-          </div>
-          <div className="calendar-widget-body calendar-memo-body">
-            <textarea
-              className="calendar-memo-textarea"
-              placeholder={`${date.getMonth() + 1}월에 꼭 기억해둘 목표, 프로젝트 키워드, 다짐을 자유롭게 적어보세요.`}
-              value={memo}
-              onChange={e => saveMemo(e.target.value)}
-              aria-label={`${date.getMonth() + 1}월 메모`}
-            />
-          </div>
-        </article>
       </section>
 
       {editing && (

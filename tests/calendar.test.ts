@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { monthDays, moveMonth, validateEvent, holidaysFor, holidayYearAvailable } from '../src/features/calendar/calendarModel';
+import { monthDays, moveMonth, validateEvent, holidaysFor, holidayYearAvailable, getUpcomingHighlights } from '../src/features/calendar/calendarModel';
 import { readCalendar, writeCalendar } from '../src/features/calendar/calendarStorage';
 import { getSeasonForDate, getSeasonalDailyState, SEASON_LANDSCAPES, ROUND_ROBIN_LANDSCAPES, getRoundRobinLandscape, ROUND_ROBIN_INTERVAL_MS } from '../src/features/calendar/seasonalCanvas';
 
@@ -8,6 +8,27 @@ function memory(raw: string | null = null) {
   return { getItem: () => raw, setItem: (_key: string, value: string) => { raw = value; } };
 }
 describe('calendar dates and events', () => {
+  it('finds upcoming holidays and events across years up to three months ahead', () => {
+    const entries = [
+      { ...event, id: 'past', date: '2026-12-29' },
+      { ...event, id: 'today', date: '2026-12-30' },
+      { ...event, id: 'boundary', date: '2027-03-30' },
+      { ...event, id: 'later', date: '2027-03-31' },
+    ];
+    const items = getUpcomingHighlights('2026-12-30', entries);
+    expect(items.map(item => item.id)).toContain('today');
+    expect(items.map(item => item.id)).toContain('boundary');
+    expect(items.map(item => item.id)).not.toContain('past');
+    expect(items.map(item => item.id)).not.toContain('later');
+    expect(items.some(item => item.date === '2027-01-01' && item.type === 'holiday')).toBe(true);
+    expect(items.map(item => item.date)).toEqual([...items.map(item => item.date)].sort());
+    const monthEnd = getUpcomingHighlights('2027-01-31', [
+      { ...event, id: 'last-day', date: '2027-04-30' },
+      { ...event, id: 'next-day', date: '2027-05-01' },
+    ]);
+    expect(monthEnd.map(item => item.id)).toContain('last-day');
+    expect(monthEnd.map(item => item.id)).not.toContain('next-day');
+  });
   it('includes leap day and complete weeks without UTC date drift', () => {
     const days = monthDays('2024-02-01');
     expect(days[0]).toBe('2024-01-28');
@@ -24,8 +45,14 @@ describe('calendar dates and events', () => {
       expect(validateEvent({ ...event, ...patch })).not.toBe('');
     }
     expect(validateEvent({ ...event, allDay: true, start: '', end: '' })).toBe('');
+    expect(validateEvent({ ...event, color: 'blue' })).toBe('');
+    expect(validateEvent({ ...event, color: 'invalid' } as never)).not.toBe('');
   });
   it('provides substitute and overlapping holidays and distinguishes unknown years', () => {
+    expect(holidaysFor('2027-01-01')).toEqual(['신년']);
+    expect(holidaysFor('2027-12-25')).toEqual(['크리스마스']);
+    expect(holidaysFor('2027-12-27')).toEqual(['대체공휴일(크리스마스)']);
+    expect(getUpcomingHighlights('2026-12-01', []).find(item => item.date === '2026-12-25')?.title).toBe('크리스마스');
     expect(holidaysFor('2025-05-05')).toEqual(['어린이날', '부처님 오신 날']);
     expect(holidaysFor('2026-03-02').join()).toContain('대체공휴일');
     expect(holidayYearAvailable('2035-01-01')).toBe(false);
@@ -39,7 +66,7 @@ describe('calendar persistence', () => {
     expect(readCalendar(storage).events).toEqual([event]);
   });
   it('blocks malformed records rather than silently replacing them', () => {
-    for (const raw of ['{', '{}', JSON.stringify({ version: 1, events: [{ ...event, date: '2026-02-30' }] }), JSON.stringify({ version: 1, events: [event, event] })]) {
+    for (const raw of ['{', '{}', JSON.stringify({ version: 1, events: [{ ...event, date: '2026-02-30' }] }), JSON.stringify({ version: 1, events: [{ ...event, color: 'invalid' }] }), JSON.stringify({ version: 1, events: [event, event] })]) {
       const storage = memory(raw);
       expect(readCalendar(storage).error).not.toBe('');
       expect(storage.getItem()).toBe(raw);

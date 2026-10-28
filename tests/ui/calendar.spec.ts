@@ -65,7 +65,7 @@ test('corrupt storage stays intact and failed saves retain the draft', async ({ 
 test('crowded dates, both themes and narrow windows stay usable', async ({ page }) => {
   await page.evaluate(() => localStorage.setItem('friday.calendar.v1', JSON.stringify({ version: 1, events: Array.from({ length: 6 }, (_, i) => ({ id: String(i), title: `일정 ${i} — 긴 제목도 칸을 넘지 않도록 확인합니다`, date: '2026-10-26', allDay: true, start: '', end: '', notes: '' })) })));
   await page.getByRole('button', { name: 'Calendar', exact: true }).click();
-  await expect(page.locator('[data-date="2026-10-26"]')).toContainText('+4개');
+  await expect(page.locator('[data-date="2026-10-26"]').locator('..')).toContainText('+4개');
   await expect(page.locator('.calendar-agenda-event')).toHaveCount(6);
   for (const theme of ['Midnight', 'Daylight']) {
     await page.getByRole('button', { name: '워크스페이스 설정', exact: true }).click();
@@ -196,8 +196,10 @@ test('overlapping holidays and crowded event previews stay inside the day cell',
   const day = page.locator('[data-date="2025-05-05"]');
   await day.click();
   await expect(page.locator('.calendar-holiday')).toHaveCount(2);
-  const bounds = await day.evaluate(element => ({ bottom: element.getBoundingClientRect().bottom, more: element.querySelector('.calendar-more')!.getBoundingClientRect().bottom }));
+  const bounds = await day.evaluate(element => ({ bottom: element.getBoundingClientRect().bottom, more: element.parentElement!.querySelector('.calendar-more')!.getBoundingClientRect().bottom }));
   expect(bounds.more).toBeLessThanOrEqual(bounds.bottom);
+  const addTop = (await page.locator('.calendar-cell-quick-add').boundingBox())!.y;
+  expect(bounds.more).toBeLessThanOrEqual(addTop);
 });
 
 test('tall calendar uses the workspace and holiday labels remain readable', async ({ page }) => {
@@ -233,7 +235,7 @@ test('X close button dismisses immediately without confirmation even if dirty, a
   const agenda = page.locator('.calendar-agenda');
   await expect(agenda).toBeVisible();
   await expect(agenda).toContainText('26');
-  await expect(agenda.locator('.calendar-empty-add-btn')).toBeVisible();
+  await expect(agenda.getByRole('button', { name: '이 날짜에 추가' })).toHaveCount(0);
 
   // Take close-up screenshot of the agenda panel & hero card
   await page.locator('.calendar-agenda').screenshot({ path: 'tmp/screenshots/calendar-agenda-hero-panel.png' });
@@ -323,4 +325,155 @@ test('landscape picker cycles all scenes without changing the selected day or ag
   await page.setViewportSize({ width: 800, height: 900 });
   await expect(next).toBeVisible();
   await expect(previous).toBeVisible();
+});
+
+test('month picker jumps between years and months and closes with Escape', async ({ page }) => {
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  const trigger = page.getByRole('button', { name: /연도와 월 선택/ });
+  const gridBounds = (await page.getByRole('grid').boundingBox())!;
+  const controlsBounds = (await page.locator('.calendar-stepper').boundingBox())!;
+  expect(Math.abs(gridBounds.x + gridBounds.width / 2 - controlsBounds.x - controlsBounds.width / 2)).toBeLessThan(2);
+  await trigger.click();
+  await page.screenshot({ path: 'tmp/screenshots/calendar-month-picker.png' });
+  await page.getByRole('button', { name: '다음 연도', exact: true }).click();
+  await page.getByRole('button', { name: '3월', exact: true }).click();
+  await expect(page.getByRole('grid', { name: '2027년 3월' })).toBeVisible();
+  await trigger.click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: '연도와 월 선택' })).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
+test('today remains identifiable when another date is selected', async ({ page }) => {
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  await page.locator('[data-date="2026-10-25"]').click();
+  await expect(page.locator('[data-date="2026-10-26"]')).toHaveAttribute('aria-current', 'date');
+  await expect(page.locator('[data-date="2026-10-26"]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('[data-date="2026-10-25"]')).toHaveAttribute('aria-pressed', 'true');
+  const today = page.locator('[data-date="2026-10-26"]');
+  await expect(today).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
+  const selectedNumber = page.locator('[data-date="2026-10-25"] .calendar-day-number');
+  await expect(selectedNumber).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(today.locator('.calendar-day-number')).toHaveCSS('background-image', 'none');
+  expect(await today.evaluate(el => getComputedStyle(el).backgroundColor)).toBe(await page.locator('[data-date="2026-10-27"]').evaluate(el => getComputedStyle(el).backgroundColor));
+  await page.screenshot({ path: 'tmp/screenshots/calendar-selected-and-today.png' });
+});
+
+test('upcoming highlights stay based on today while navigating months', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('friday.calendar.v1', JSON.stringify({ version: 1, events: [
+    { id: 'past', title: '지난 일정', date: '2026-10-25', allDay: true, start: '', end: '', notes: '' },
+    { id: 'future', title: '다음 달 일정', date: '2026-11-10', allDay: true, start: '', end: '', notes: '' },
+  ] })));
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  const list = page.locator('.calendar-dday-list').first();
+  await expect(list).toContainText('다음 달 일정');
+  await expect(page.locator('.calendar-dday-list').nth(1)).toContainText('크리스마스');
+  await expect(page.locator('.calendar-dday-list').nth(1)).toContainText('신년');
+  await expect(list).not.toContainText('지난 일정');
+  await page.getByRole('button', { name: '이전 달', exact: true }).click();
+  await expect(list).toContainText('다음 달 일정');
+  await list.getByRole('button', { name: /다음 달 일정/ }).press('Enter');
+  await expect(page.locator('[data-date="2026-11-10"]')).toBeFocused();
+});
+
+test('crowded selected dates keep week heights and agenda cards compact', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('friday.calendar.v1', JSON.stringify({ version: 1, events: Array.from({ length: 3 }, (_, i) => ({ id: String(i), title: `일정 ${i}`, date: '2026-10-26', allDay: true, start: '', end: '', notes: '' })) })));
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  const heights = await page.locator('.calendar-week').evaluateAll(rows => rows.map(row => row.getBoundingClientRect().height));
+  expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(2);
+  const gridBox = (await page.locator('.calendar-grid').boundingBox())!;
+  const agendaBox = (await page.locator('.calendar-agenda-inner').boundingBox())!;
+  expect(Math.abs(gridBox.height - agendaBox.height)).toBeLessThan(2);
+  await page.locator('[data-date="2026-10-27"]').click();
+  expect(Math.abs((await page.locator('.calendar-grid').boundingBox())!.height - gridBox.height)).toBeLessThan(2);
+  expect(Math.abs((await page.locator('.calendar-agenda-inner').boundingBox())!.height - agendaBox.height)).toBeLessThan(2);
+  await page.locator('[data-date="2026-10-26"] .calendar-day-number').click();
+  const cards = page.locator('.calendar-agenda-event');
+  await expect(cards).toHaveCount(3);
+  expect((await cards.first().boundingBox())!.height).toBeLessThan(100);
+  await expect(page.locator('[data-date="2026-10-26"]').locator('..').locator('.calendar-more')).toBeVisible();
+  const moreBottom = await page.locator('[data-date="2026-10-26"]').locator('..').locator('.calendar-more').evaluate(el => el.getBoundingClientRect().bottom);
+  expect(moreBottom).toBeLessThanOrEqual((await page.locator('.calendar-cell-quick-add').boundingBox())!.y);
+  await page.screenshot({ path: 'tmp/screenshots/calendar-crowded-balanced.png' });
+});
+
+test('a crowded six-week month keeps its selected date controls separate', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('friday.calendar.v1', JSON.stringify({ version: 1, events: Array.from({ length: 3 }, (_, i) => ({ id: String(i), title: `일정 ${i}`, date: '2026-05-20', allDay: true, start: '', end: '', notes: '' })) })));
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  await page.getByLabel('월 선택', { exact: true }).fill('2026-05');
+  await page.locator('[data-date="2026-05-20"] .calendar-day-number').click();
+  await expect(page.locator('.calendar-week')).toHaveCount(6);
+  const more = page.locator('[data-date="2026-05-20"]').locator('..').locator('.calendar-more');
+  await expect(more).toContainText('+2개');
+  await page.locator('.calendar-cell-quick-add').evaluate(async el => { await Promise.all(el.getAnimations().map(animation => animation.finished)); });
+  expect((await more.boundingBox())!.y + (await more.boundingBox())!.height).toBeLessThanOrEqual((await page.locator('.calendar-cell-quick-add').boundingBox())!.y);
+});
+
+test('upcoming events and holidays have separate cards while saved memos remain intact', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('friday.calendar.memo.2026-10', '기존 메모');
+    localStorage.setItem('friday.calendar.v1', JSON.stringify({ version: 1, events: [{ id: 'upcoming', title: '예정 회의', date: '2026-11-10', allDay: true, start: '', end: '', notes: '' }] }));
+  });
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  const cards = page.locator('.calendar-bottom-dashboard > article');
+  await expect(cards.nth(0)).toContainText('다가오는 일정들');
+  await expect(cards.nth(0)).toContainText('예정 회의');
+  await expect(cards.nth(0)).not.toContainText('크리스마스');
+  await expect(cards.nth(1)).toContainText('다가오는 공휴일들');
+  await expect(cards.nth(1)).toContainText('크리스마스');
+  await expect(cards.nth(1)).not.toContainText('예정 회의');
+  await expect(cards.nth(2)).toContainText('월간 일정 리듬');
+  await expect(page.getByLabel('10월 메모')).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('friday.calendar.memo.2026-10'))).toBe('기존 메모');
+});
+
+test('hovering upcoming items does not create horizontal overflow', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('friday.calendar.v1', JSON.stringify({ version: 1, events: Array.from({ length: 6 }, (_, i) => ({ id: String(i), title: `아주 긴 일정 제목 ${i} 가로 스크롤이 생기지 않아야 합니다`, date: '2026-11-10', allDay: true, start: '', end: '', notes: '' })) })));
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  for (const [index, list] of (await page.locator('.calendar-dday-list').all()).entries()) {
+    await list.locator('.calendar-dday-item').first().hover();
+    await list.locator('.calendar-dday-item').first().evaluate(async el => { await Promise.all(el.getAnimations().map(animation => animation.finished)); });
+    expect(await list.evaluate(el => el.scrollWidth - el.clientWidth)).toBe(0);
+    await list.screenshot({ path: `tmp/screenshots/calendar-hover-${index}.png` });
+  }
+});
+
+test('agenda cards show time above the title and preserve details in the editor', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('friday.calendar.v1', JSON.stringify({ version: 1, events: [{ id: 'timed', title: '길이가 긴 일정 제목 확인', date: '2026-10-26', allDay: false, start: '09:00', end: '10:00', notes: '상세 메모' }] })));
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  const card = page.locator('.calendar-agenda-event');
+  const title = (await card.locator('strong').boundingBox())!;
+  const time = (await card.locator('.calendar-event-time').boundingBox())!;
+  expect(time.y + time.height).toBeLessThanOrEqual(title.y);
+  await expect(card.locator('.calendar-event-note')).toContainText('상세 메모');
+  await card.click();
+  await expect(page.getByLabel('메모', { exact: true })).toHaveValue('상세 메모');
+});
+
+test('cell event opens its editor and chosen color survives reload', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('friday.calendar.v1', JSON.stringify({ version: 1, events: [{ id: 'legacy', title: '기존 일정', date: '2026-10-26', allDay: true, start: '', end: '', notes: '' }] })));
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  await page.getByRole('button', { name: '달력에서 기존 일정 수정', exact: true }).click();
+  await page.getByRole('radio', { name: '파랑', exact: true }).check();
+  await page.locator('.calendar-editor').screenshot({ path: 'tmp/screenshots/calendar-event-colors.png' });
+  await page.getByRole('button', { name: '저장', exact: true }).click();
+  await page.reload();
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  const preview = page.locator('.calendar-cell').filter({ has: page.locator('[data-date="2026-10-26"]') }).getByRole('button', { name: '달력에서 기존 일정 수정', exact: true });
+  await expect(preview).toBeVisible();
+  await expect(preview).toHaveAttribute('data-color', 'blue');
+  await expect(preview).toHaveCSS('border-left-color', 'rgb(75, 142, 240)');
+  await preview.click();
+  await expect(page.getByRole('radio', { name: '파랑', exact: true })).toBeChecked();
+});
+
+test('an event on an unselected date opens directly from the calendar', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('friday.calendar.v1', JSON.stringify({ version: 1, events: [{ id: 'other-day', title: '다른 날 일정', date: '2026-10-29', allDay: true, start: '', end: '', notes: '' }] })));
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  const preview = page.getByRole('button', { name: '달력에서 다른 날 일정 수정', exact: true });
+  await preview.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByLabel('제목', { exact: true })).toHaveValue('다른 날 일정');
+  await expect(page.locator('[data-date="2026-10-29"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('radio', { name: '기본', exact: true })).toBeChecked();
 });

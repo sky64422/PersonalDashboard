@@ -9,7 +9,18 @@ export interface CalendarEvent {
   start: string;
   end: string;
   notes: string;
+  color?: CalendarEventColor;
 }
+
+export const EVENT_COLORS = [
+  { id: 'default', label: '기본', value: 'var(--calendar-accent)' },
+  { id: 'red', label: '빨강', value: '#e35454' },
+  { id: 'orange', label: '주황', value: '#d58a2f' },
+  { id: 'green', label: '초록', value: '#39a673' },
+  { id: 'blue', label: '파랑', value: '#4b8ef0' },
+  { id: 'pink', label: '분홍', value: '#d9639e' },
+] as const;
+export type CalendarEventColor = typeof EVENT_COLORS[number]['id'];
 
 export const CALENDAR_MIN_DATE = '1900-01-01';
 export const CALENDAR_MAX_DATE = '2100-12-31';
@@ -28,7 +39,8 @@ export const CALENDAR_COPY = {
   add: '일정 추가', edit: '일정 수정', save: '저장', cancel: '취소', remove: '삭제',
   title: '제목', date: '날짜', allDay: '종일', start: '시작', end: '종료', notes: '메모',
   today: '오늘', previous: '이전 달', next: '다음 달', month: '월 선택',
-  empty: '아직 일정이 없어요', emptyHint: '이날의 계획을 가볍게 남겨 보세요.', agendaTitle: '일정',
+  previousYear: '이전 해', nextYear: '다음 해', yearSelect: '연도 선택',
+  empty: '아직 일정이 없어요',
   readError: '일정을 읽지 못했습니다. 기존 데이터를 보호하기 위해 편집을 잠갔습니다. 다시 불러오거나 저장 데이터를 확인해 주세요.',
   saveError: '저장하지 못했습니다. 저장 공간 또는 다른 창의 변경을 확인해 주세요. 입력한 내용은 유지됩니다.',
   conflict: '저장하지 못했습니다. 다른 창의 변경을 보호했습니다. 입력 내용을 새 일정으로 저장할 수 있습니다.',
@@ -60,6 +72,14 @@ export function moveMonth(key: string, delta: number): string {
   return formatDateKey(target);
 }
 
+export function moveYear(key: string, delta: number): string {
+  const date = localDate(key);
+  const target = new Date(date.getFullYear() + delta, date.getMonth(), 1);
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+  target.setDate(Math.min(date.getDate(), lastDay));
+  return formatDateKey(target);
+}
+
 export function monthDays(key: string): string[] {
   const date = localDate(key);
   const first = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -69,7 +89,15 @@ export function monthDays(key: string): string[] {
   return Array.from({ length: count }, (_, i) => offsetDateKey(start, i));
 }
 
-export function holidaysFor(key: string): string[] { return HOLIDAYS[key.slice(0, 4)]?.[key] ?? []; }
+const HOLIDAY_LABELS: Record<string, string> = {
+  '1월 1일': '신년',
+  '기독탄신일': '크리스마스',
+  '대체공휴일(기독탄신일)': '대체공휴일(크리스마스)',
+};
+
+export function holidaysFor(key: string): string[] {
+  return (HOLIDAYS[key.slice(0, 4)]?.[key] ?? []).map(name => HOLIDAY_LABELS[name] ?? name);
+}
 export function holidayYearAvailable(key: string): boolean { return Object.hasOwn(HOLIDAYS, key.slice(0, 4)); }
 
 export function validateEvent(event: CalendarEvent): string {
@@ -77,6 +105,7 @@ export function validateEvent(event: CalendarEvent): string {
   if (!validDate(event.date)) return CALENDAR_COPY.invalidDate;
   if (!event.allDay && (!TIME_PATTERN.test(event.start) || !TIME_PATTERN.test(event.end) || event.end <= event.start)) return CALENDAR_COPY.invalidTime;
   if (event.notes.length > EVENT_NOTES_LIMIT) return CALENDAR_COPY.invalidNotes;
+  if (event.color !== undefined && !EVENT_COLORS.some(color => color.id === event.color)) return '일정 색상을 확인해 주세요.';
   return '';
 }
 
@@ -105,25 +134,29 @@ export function calculateDDay(targetKey: string, todayKey: string): string {
   return `D+${-diffDays}`;
 }
 
-export function getUpcomingHighlights(month: string, todayKey: string, events: CalendarEvent[]): UpcomingItem[] {
-  const items: UpcomingItem[] = [];
-  const year = month.slice(0, 4);
-  const yearHolidays = HOLIDAYS[year] ?? {};
+export const UPCOMING_MONTHS = 3;
 
-  for (const [date, names] of Object.entries(yearHolidays)) {
-    if (date.startsWith(month)) {
-      items.push({
-        id: `h-${date}`,
-        date,
-        title: names.join(', '),
-        type: 'holiday',
-        dDay: calculateDDay(date, todayKey),
-      });
+export function getUpcomingHighlights(todayKey: string, events: CalendarEvent[]): UpcomingItem[] {
+  const items: UpcomingItem[] = [];
+  const end = moveMonth(todayKey, UPCOMING_MONTHS);
+  const years = new Set([todayKey.slice(0, 4), end.slice(0, 4)]);
+
+  for (const year of years) {
+    for (const date of Object.keys(HOLIDAYS[year] ?? {})) {
+      if (date >= todayKey && date <= end) {
+        items.push({
+          id: `h-${date}`,
+          date,
+          title: holidaysFor(date).join(', '),
+          type: 'holiday',
+          dDay: calculateDDay(date, todayKey),
+        });
+      }
     }
   }
 
   for (const ev of events) {
-    if (ev.date.startsWith(month)) {
+    if (ev.date >= todayKey && ev.date <= end) {
       items.push({
         id: ev.id,
         date: ev.date,

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type CSSProperties, type FormEvent } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Modal } from '../../components/ui';
 import { CalendarConflictError } from './calendarStorage';
@@ -10,6 +10,7 @@ import {
   EVENT_NOTES_LIMIT,
   DEFAULT_EVENT_START,
   DEFAULT_EVENT_END,
+  EVENT_COLORS,
   validateEvent,
   type CalendarEvent,
 } from './calendarModel';
@@ -155,6 +156,20 @@ export function EventEditor({
               </label>
             </div>
           )}
+
+          <fieldset className="calendar-color-picker">
+            <legend>일정 색상</legend>
+            <div className="calendar-color-options">
+              {EVENT_COLORS.map(color => (
+                <label key={color.id} className="calendar-color-option" title={color.label}>
+                  <input type="radio" name="event-color" aria-label={color.label}
+                    checked={(draft.color ?? 'default') === color.id}
+                    onChange={() => update({ color: color.id })} />
+                  <span style={{ '--event-color': color.value } as CSSProperties} aria-hidden="true" />
+                </label>
+              ))}
+            </div>
+          </fieldset>
 
           <label>
             {C.notes}
