@@ -815,10 +815,13 @@ html[data-theme='dark'] .agenda-seasonal-backdrop {
   height: 100%;
   object-fit: cover;
   object-position: center;
-  transition: opacity 0.5s ease;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
   filter: saturate(1.08) brightness(0.92);
   z-index: 0;
 }
+
+.agenda-seasonal-photo.is-active { opacity: 1; }
 
 html[data-theme='dark'] .agenda-seasonal-photo {
   filter: saturate(1.15) brightness(0.72) contrast(1.08);
@@ -1284,6 +1287,7 @@ html[data-theme='dark'] .calendar-empty > strong {
 .calendar-landscape-picker {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   opacity: 1;
 }
@@ -1310,23 +1314,6 @@ html[data-theme='dark'] .calendar-empty > strong {
 .calendar-landscape-arrow:focus-visible {
   outline: 2px solid var(--calendar-accent);
   outline-offset: 3px;
-}
-
-.calendar-landscape-caption {
-  display: grid;
-  gap: 3px;
-  flex: 1;
-  min-width: 0;
-  color: var(--text);
-  text-align: center;
-  font-size: 10.5px;
-  letter-spacing: 0;
-}
-
-.calendar-landscape-caption small {
-  color: var(--muted);
-  font-size: 9px;
-  font-variant-numeric: tabular-nums;
 }
 
 /* --------------------------------------------------------------------------
@@ -1969,6 +1956,7 @@ html[data-theme='dark'] .calendar-empty > strong {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .agenda-seasonal-photo,
   .calendar-day,
   .calendar-agenda-event,
   .calendar-preview,
@@ -1977,6 +1965,7 @@ html[data-theme='dark'] .calendar-empty > strong {
   }
 }
 
+:root[data-reduced-motion='true'] .agenda-seasonal-photo,
 :root[data-reduced-motion='true'] .calendar-day,
 :root[data-reduced-motion='true'] .calendar-agenda-event,
 :root[data-reduced-motion='true'] .calendar-preview,

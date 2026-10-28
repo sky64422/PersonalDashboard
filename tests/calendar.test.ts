@@ -84,7 +84,7 @@ describe('calendar persistence', () => {
   });
 });
 
-describe('seasonal living landscapes and 30-min round robin', () => {
+describe('seasonal living landscapes and 10-second round robin', () => {
   it('has exactly 4 curated landscapes (one per season)', () => {
     expect(ROUND_ROBIN_LANDSCAPES).toHaveLength(4);
     expect(ROUND_ROBIN_LANDSCAPES).toEqual([
@@ -99,7 +99,8 @@ describe('seasonal living landscapes and 30-min round robin', () => {
     expect(SEASON_LANDSCAPES.winter).toEqual(['winter-snow-mountain']);
   });
 
-  it('rotates through the 4 landscapes in a round-robin cycle every 30 minutes', () => {
+  it('rotates through the 4 landscapes in a round-robin cycle every 10 seconds', () => {
+    expect(ROUND_ROBIN_INTERVAL_MS).toBe(10000);
     const base = 0; // 0ms = slot 0
     expect(getRoundRobinLandscape(base)).toBe('spring-blossom-tunnel');
     expect(getRoundRobinLandscape(base + ROUND_ROBIN_INTERVAL_MS)).toBe('summer-rain-temple');
@@ -108,14 +109,14 @@ describe('seasonal living landscapes and 30-min round robin', () => {
     expect(getRoundRobinLandscape(base + ROUND_ROBIN_INTERVAL_MS * 4)).toBe('spring-blossom-tunnel');
   });
 
-  it('aligns test timestamp (2026-10-26T12:00:00+09:00) with autumn-reed-ridge', () => {
+  it('aligns test timestamp (2026-10-26T12:00:00+09:00) with spring-blossom-tunnel', () => {
     const fixedTime = new Date('2026-10-26T12:00:00+09:00').getTime();
-    expect(getRoundRobinLandscape(fixedTime)).toBe('autumn-reed-ridge');
+    expect(getRoundRobinLandscape(fixedTime)).toBe('spring-blossom-tunnel');
     const state = getSeasonalDailyState('2026-10-26', undefined, fixedTime);
-    expect(state.season).toBe('autumn');
-    expect(state.landscapeId).toBe('autumn-reed-ridge');
+    expect(state.season).toBe('spring');
+    expect(state.landscapeId).toBe('spring-blossom-tunnel');
     expect(state.particles.length).toBe(10);
-    expect(state.particles.every(p => p.kind === 'maple')).toBe(true);
+    expect(state.particles.every(p => p.kind === 'petal')).toBe(true);
   });
 
   it('identifies 4 seasons accurately by month', () => {

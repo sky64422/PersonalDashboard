@@ -47,7 +47,7 @@ export const ROUND_ROBIN_LANDSCAPES: LandscapeId[] = [
   'winter-snow-mountain',
 ];
 
-export const ROUND_ROBIN_INTERVAL_MS = 30 * 60 * 1000;
+export const ROUND_ROBIN_INTERVAL_MS = 10 * 1000;
 
 export function getRoundRobinLandscape(timestampMs: number = Date.now()): LandscapeId {
   const slot = Math.floor(timestampMs / ROUND_ROBIN_INTERVAL_MS);

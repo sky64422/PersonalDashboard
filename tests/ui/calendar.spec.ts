@@ -256,44 +256,19 @@ test('X close button dismisses immediately without confirmation even if dirty, a
   await expect(page.getByText('저장하지 않은 변경이 있습니다.')).toHaveCount(0);
 });
 
-test('4 vertical landscapes rotate every 30 minutes in a Round Robin cycle', async ({ page }) => {
+test('4 vertical landscapes rotate every 10 seconds in a Round Robin cycle', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 1360 });
   await page.getByRole('button', { name: 'Calendar', exact: true }).click();
 
   const backdrop = page.locator('.agenda-seasonal-backdrop');
   await expect(backdrop).toBeVisible();
 
-  // 1. Initial 30-min slot (12:00 KST): autumn-reed-ridge (가을 1: 노을빛 가을 호수)
-  await expect(backdrop).toHaveClass(/season-autumn/);
-  await expect(backdrop).toHaveClass(/landscape-autumn-reed-ridge/);
-  await page.locator('.calendar-agenda').screenshot({ path: 'tmp/screenshots/calendar-landscape-autumn-today.png' });
-
-  // 2. Rotate after 30 minutes (12:30 KST): winter-snow-mountain (겨울 1: 새벽 설산과 침엽수림)
-  await page.clock.setFixedTime(new Date('2026-10-26T12:30:00+09:00'));
-  await page.clock.runFor(11000);
-  await expect(backdrop).toHaveClass(/season-winter/);
-  await expect(backdrop).toHaveClass(/landscape-winter-snow-mountain/);
-  await page.locator('.calendar-agenda').screenshot({ path: 'tmp/screenshots/calendar-landscape-winter.png' });
-
-  // 3. Rotate after 30 minutes (13:00 KST): spring-blossom-tunnel (봄 1: 화사한 벚꽃 터널과 햇살)
-  await page.clock.setFixedTime(new Date('2026-10-26T13:00:00+09:00'));
-  await page.clock.runFor(11000);
-  await expect(backdrop).toHaveClass(/season-spring/);
   await expect(backdrop).toHaveClass(/landscape-spring-blossom-tunnel/);
-  await page.locator('.calendar-agenda').screenshot({ path: 'tmp/screenshots/calendar-landscape-spring.png' });
-
-  // 4. Rotate after 30 minutes (13:30 KST): summer-rain-temple (여름 1: 청량한 에메랄드빛 여름 바다)
-  await page.clock.setFixedTime(new Date('2026-10-26T13:30:00+09:00'));
-  await page.clock.runFor(11000);
-  await expect(backdrop).toHaveClass(/season-summer/);
-  await expect(backdrop).toHaveClass(/landscape-summer-rain-temple/);
-  await page.locator('.calendar-agenda').screenshot({ path: 'tmp/screenshots/calendar-landscape-summer.png' });
-
-  // 5. Rotate after 30 minutes (14:00 KST): completes the round-robin cycle back to autumn-reed-ridge
-  await page.clock.setFixedTime(new Date('2026-10-26T14:00:00+09:00'));
-  await page.clock.runFor(11000);
-  await expect(backdrop).toHaveClass(/season-autumn/);
-  await expect(backdrop).toHaveClass(/landscape-autumn-reed-ridge/);
+  for (const [seconds, landscape] of [[10, 'summer-rain-temple'], [20, 'autumn-reed-ridge'], [30, 'winter-snow-mountain'], [40, 'spring-blossom-tunnel']] as const) {
+    await page.clock.setFixedTime(new Date(`2026-10-26T12:00:${String(seconds).padStart(2, '0')}+09:00`));
+    await page.clock.runFor(10000);
+    await expect(backdrop).toHaveClass(new RegExp(`landscape-${landscape}`));
+  }
 });
 
 test('landscape picker cycles all scenes without changing the selected day or agenda', async ({ page }) => {
@@ -467,6 +442,20 @@ test('cell event opens its editor and chosen color survives reload', async ({ pa
   await expect(page.getByRole('radio', { name: '파랑', exact: true })).toBeChecked();
 });
 
+test('background playback can pause and resume automatic rotation', async ({ page }) => {
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  const backdrop = page.locator('.agenda-seasonal-backdrop');
+  const initial = await backdrop.getAttribute('class');
+  await page.getByRole('button', { name: '배경 자동 전환 일시정지' }).click({ timeout: 3000 });
+  await page.clock.setFixedTime(new Date('2026-10-26T12:00:10+09:00'));
+  await page.clock.runFor(11000);
+  await expect(backdrop).toHaveAttribute('class', initial!);
+  await page.getByRole('button', { name: '배경 자동 전환 재생' }).click();
+  await page.clock.setFixedTime(new Date('2026-10-26T12:00:20+09:00'));
+  await page.clock.runFor(11000);
+  await expect(backdrop).not.toHaveAttribute('class', initial!);
+});
+
 test('an event on an unselected date opens directly from the calendar', async ({ page }) => {
   await page.evaluate(() => localStorage.setItem('friday.calendar.v1', JSON.stringify({ version: 1, events: [{ id: 'other-day', title: '다른 날 일정', date: '2026-10-29', allDay: true, start: '', end: '', notes: '' }] })));
   await page.getByRole('button', { name: 'Calendar', exact: true }).click();
@@ -476,4 +465,17 @@ test('an event on an unselected date opens directly from the calendar', async ({
   await expect(page.getByLabel('제목', { exact: true })).toHaveValue('다른 날 일정');
   await expect(page.locator('[data-date="2026-10-29"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('radio', { name: '기본', exact: true })).toBeChecked();
+});
+
+test('background images crossfade on manual navigation', async ({ page }) => {
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  const photos = page.locator('.agenda-seasonal-photo');
+  await expect(photos).toHaveCount(4);
+  await expect(page.locator('.agenda-seasonal-photo.is-active')).toHaveCount(1);
+  const initial = await page.locator('.agenda-seasonal-photo.is-active').getAttribute('src');
+  await page.getByRole('button', { name: '다음 배경' }).click();
+  await expect(page.locator('.agenda-seasonal-photo.is-active')).not.toHaveAttribute('src', initial!);
+  expect(await page.locator('.agenda-seasonal-photo.is-active').evaluate(el => getComputedStyle(el).transitionProperty)).toContain('opacity');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('.agenda-seasonal-photo.is-active')).toHaveCSS('transition-duration', '0s');
 });

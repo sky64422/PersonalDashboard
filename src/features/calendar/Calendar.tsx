@@ -5,6 +5,8 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Pause,
+  Play,
   Plus,
   Sparkles,
 } from 'lucide-react';
@@ -34,7 +36,7 @@ import {
 import { readCalendar, saveCalendar } from './calendarStorage';
 import { EventEditor } from './EventEditor';
 import { SeasonalAgendaCanvas } from './SeasonalAgendaCanvas';
-import { getSeasonalDailyState, LANDSCAPE_DEFS, ROUND_ROBIN_LANDSCAPES, type LandscapeId } from './seasonalCanvas';
+import { getSeasonalDailyState, LANDSCAPE_DEFS, ROUND_ROBIN_INTERVAL_MS, ROUND_ROBIN_LANDSCAPES, type LandscapeId } from './seasonalCanvas';
 import './calendar.css';
 
 const MONTH_NAME = new Intl.DateTimeFormat('en-US', { month: 'long' });
@@ -84,13 +86,21 @@ export function Calendar() {
   const days = useMemo(() => monthDays(selected), [selected]);
   const [now, setNow] = useState(() => Date.now());
   const [selectedLandscape, setSelectedLandscape] = useState<LandscapeId>();
-  // 30-minute interval round robin ticker
+  const [landscapePlaying, setLandscapePlaying] = useState(true);
+  const landscapeSlot = useRef(Math.floor(Date.now() / ROUND_ROBIN_INTERVAL_MS));
+
   useEffect(() => {
     const timer = setInterval(() => {
-      setNow(Date.now());
-    }, 10 * 1000);
+      const timestamp = Date.now();
+      const slot = Math.floor(timestamp / ROUND_ROBIN_INTERVAL_MS);
+      if (landscapePlaying && slot !== landscapeSlot.current) {
+        landscapeSlot.current = slot;
+        setSelectedLandscape(undefined);
+      }
+      setNow(timestamp);
+    }, ROUND_ROBIN_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, []);
+  }, [landscapePlaying]);
 
   const seasonal = useMemo(
     () => getSeasonalDailyState(selected, selectedLandscape, now),
@@ -101,6 +111,16 @@ export function Calendar() {
     const index = (landscapeIndex + direction + LANDSCAPES.length) % LANDSCAPES.length;
     setSelectedLandscape(LANDSCAPES[index].id);
   }
+  function toggleLandscapePlayback() {
+    if (landscapePlaying) setSelectedLandscape(seasonal.landscapeId);
+    else {
+      const timestamp = Date.now();
+      landscapeSlot.current = Math.floor(timestamp / ROUND_ROBIN_INTERVAL_MS);
+      setNow(timestamp);
+    }
+    setLandscapePlaying(!landscapePlaying);
+  }
+
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
     for (const event of sortEvents(snapshot.events)) {
@@ -438,10 +458,11 @@ export function Calendar() {
               <button type="button" className="calendar-landscape-arrow" aria-label={LANDSCAPE_COPY.previous} onClick={() => changeLandscape(-1)}>
                 <ChevronLeft size={16} aria-hidden="true" />
               </button>
-              <span className="calendar-landscape-caption" aria-live="polite" aria-atomic="true">
-                <span>{LANDSCAPE_DEFS[seasonal.landscapeId].name}</span>
-                <small>{landscapeIndex + 1} / {LANDSCAPES.length}</small>
-              </span>
+              <button type="button" className="calendar-landscape-arrow" onClick={toggleLandscapePlayback}
+                aria-label={landscapePlaying ? '배경 자동 전환 일시정지' : '배경 자동 전환 재생'}
+                title={landscapePlaying ? '배경 자동 전환 일시정지' : '배경 자동 전환 재생'}>
+                {landscapePlaying ? <Pause size={14} aria-hidden="true" /> : <Play size={14} aria-hidden="true" />}
+              </button>
               <button type="button" className="calendar-landscape-arrow" aria-label={LANDSCAPE_COPY.next} onClick={() => changeLandscape(1)}>
                 <ChevronRight size={16} aria-hidden="true" />
               </button>
