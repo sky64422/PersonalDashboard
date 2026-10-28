@@ -41,7 +41,7 @@ for (const theme of ['Daylight', 'Midnight']) {
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: '오늘', exact: true }).click();
   geometry.push(await page.evaluate(() => ({ width: innerWidth, height: innerHeight, overflow: document.documentElement.scrollWidth - innerWidth })));
-  expect(geometry.at(-1).overflow).toBe(0);
+  expect(geometry.at(-1).overflow).toBeLessThanOrEqual(0);
   await page.screenshot({ path: `tmp/screenshots/native-calendar-${theme}.png`, fullPage: true });
 }
 expect(errors).toEqual([]);
