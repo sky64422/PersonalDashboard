@@ -423,15 +423,8 @@ export function Calendar() {
               ) : (
                 !snapshot.error && (
                   <div className="calendar-empty">
-                    <div className="calendar-empty-art" aria-hidden="true">
-                      <div className="calendar-empty-lines">
-                        <i />
-                        <i />
-                        <i />
-                      </div>
-                      <div className="calendar-empty-icon">
-                        <CalendarDays size={24} strokeWidth={1.5} />
-                      </div>
+                    <div className="calendar-empty-icon" aria-hidden="true">
+                      <CalendarDays size={24} strokeWidth={1.5} />
                     </div>
                     <strong>{C.empty}</strong>
                     <p>{C.emptyHint}</p>
